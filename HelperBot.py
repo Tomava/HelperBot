@@ -16,7 +16,7 @@ description = ""
 intents = discord.Intents.default()
 intents.members = True
 bot = commands.Bot(command_prefix='!', description=description, intents=intents)
-load_dotenv(pathToDiscord + os.sep + "HelperBoyToken.env")
+load_dotenv(path_to_discord + os.sep + "HelperBoyToken.env")
 token = os.getenv('DISCORD_TOKEN')
 
 
@@ -97,8 +97,8 @@ def get_date(time_amount, time_measure):
     """
     now = datetime.now().timestamp()
     # Verify that valid time measure is used
-    for time in listOfTimeMeasures:
-        if time_measure in listOfTimeMeasures.get(time):
+    for time in list_of_time_measures:
+        if time_measure in list_of_time_measures.get(time):
             correct_time_measure = time
     if correct_time_measure is None:
         return
@@ -141,7 +141,7 @@ async def date(ctx, reminder_date: str, reminder_time: str = "12:00"):
     reminder_date = get_valid_date(reminder_date, reminder_time)
     message = ctx.message
     if reminder_date is None:
-        await message.channel.send(incorrectReminderFormat)
+        await message.channel.send(incorrect_reminder_format)
     print(reminder_date)
 
 
