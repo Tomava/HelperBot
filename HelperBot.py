@@ -113,25 +113,16 @@ def get_date_with_delta(time_amount, time_measure):
     """
     now = datetime.now().timestamp()
     # Verify that valid time measure is used
-    for time in list_of_time_measures:
-        if time_measure in list_of_time_measures.get(time):
-            correct_time_measure = time
+    for time_name in list_of_time_measures:
+        if time_measure in list_of_time_measures.get(time_name):
+            correct_time_measure = time_name
     if correct_time_measure is None:
         return
-    elif correct_time_measure == "seconds":
-        notify_time = datetime.timestamp(datetime.fromtimestamp(now) + relativedelta(seconds=time_amount))
-    elif correct_time_measure == "minutes":
-        notify_time = datetime.timestamp(datetime.fromtimestamp(now) + relativedelta(minutes=time_amount))
-    elif correct_time_measure == "hours":
-        notify_time = datetime.timestamp(datetime.fromtimestamp(now) + relativedelta(hours=time_amount))
-    elif correct_time_measure == "days":
-        notify_time = datetime.timestamp(datetime.fromtimestamp(now) + relativedelta(days=time_amount))
-    elif correct_time_measure == "weeks":
-        notify_time = datetime.timestamp(datetime.fromtimestamp(now) + relativedelta(weeks=time_amount))
-    elif correct_time_measure == "months":
-        notify_time = datetime.timestamp(datetime.fromtimestamp(now) + relativedelta(months=time_amount))
-    elif correct_time_measure == "years":
-        notify_time = datetime.timestamp(datetime.fromtimestamp(now) + relativedelta(years=time_amount))
+    try:
+        time_measure_to_use = {correct_time_measure: time_amount}
+        notify_time = datetime.timestamp(datetime.fromtimestamp(now) + relativedelta(**time_measure_to_use))
+    except OSError:
+        return
     return notify_time
 
 
