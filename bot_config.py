@@ -1,10 +1,12 @@
 import os
+import json
 from pathlib import Path
 
+EMBED_MESSAGE_MAX_CHARACTERS = 2048
 list_of_commands = {"!delete x": "This command deletes x amount of messages",
                     "!noclean": "I will automatically clean youtube links unless the message starts with this command",
                     "!count x": "I will count to x with about a second between messages. Use !count stop to stop counting",
-                    "!remindme / !reminder \nx [Time Measure] \nOR\ndd.mm.yyyy hh.mm[.ss]\nOR\ntomorrow/today hh.mm[.ss]": "I will remind you in x amount of [Time Measures]",
+                    "!remindme / !reminder \nx [Time Measure] \nOR\ndd.mm.yyyy_hh:mm[:ss]\nOR\ntomorrow/today_hh.mm[.ss]": "I will remind you in x amount of [Time Measures]",
                     "!remindme / !reminder list": "List your reminders",
                     "!remindme / !reminder delete / remove x": "Delete reminder at index x",
                     "!timemeasures": "Get a list of time measures",
@@ -35,7 +37,6 @@ incorrect_reminder_format = ("Your message wasn't formatted correctly\n"
                              "Or !remindme delete x\n"
                              "To get a list of time measures, try !timemeasures")
 
-embed_message_max_characters = 2048
 
 # Path to home folder
 home = str(Path.home())
@@ -46,3 +47,29 @@ path_to_reminders = home + os.sep + "Discord" + os.sep + "reminders"
 def make_dirs():
     if not os.path.exists(path_to_reminders):
         os.makedirs(path_to_reminders)
+
+
+def get_reminders():
+    """
+    Returns reminders as dictionary
+    :return: dict
+    """
+    if not os.path.exists(path_to_reminders + os.sep + "reminders.json"):
+        return {}
+    else:
+        with open(path_to_reminders + os.sep + "reminders.json", "r", encoding='utf-8') as reminder_file:
+            list_of_reminders = dict(json.load(reminder_file))
+        return list_of_reminders
+
+
+def get_reminder_amounts():
+    """
+    Get reminder amounts by user
+    :return:
+    """
+    if not os.path.exists(path_to_reminders + os.sep + "reminders_amounts.json"):
+        return {}
+    else:
+        with open(path_to_reminders + os.sep + "reminders_amounts.json", "r", encoding='utf-8') as amount_file:
+            reminder_amounts = dict(json.load(amount_file))
+        return reminder_amounts
