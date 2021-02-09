@@ -15,7 +15,6 @@ COMMAND_PREFIX = "!"
 
 make_dirs()
 list_of_reminders = get_reminders()
-reminder_amounts = get_reminder_amounts()
 description = ""
 intents = discord.Intents.default()
 intents.members = True
