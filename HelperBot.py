@@ -111,7 +111,7 @@ def get_date_with_delta(time_amount, time_measure):
     :param time_measure: str, E.g. seconds, mins
     :return: Datetime timestamp
     """
-    now = datetime.now().replace(microsecond=0)
+    now = datetime.now()
     # Verify that valid time measure is used
     for time_name in list_of_time_measures:
         if time_measure in list_of_time_measures.get(time_name):
@@ -178,28 +178,31 @@ async def make_reminder(message, message_command, message_text, timestamp):
     """
     user_id = str(message.author.id)
     timestamp_str = str(timestamp)
-    if timestamp_str not in list_of_reminders.keys():
-        list_of_reminders[timestamp_str] = []
+    if user_id not in list_of_reminders:
+        list_of_reminders[user_id] = {}
     # Check that user doesn't have too many reminder already
-    if user_id in reminder_amounts:
-        if int(reminder_amounts.get(user_id)) > 200:
-            return await message.channel.send("There are already too many reminders")
+    elif len(list_of_reminders.get(user_id)) > MAXIMUM_REMINDERS:
+        return await message.channel.send("There are already too many reminders")
+    # Make sure the same time doesn't exist multiple times
+    while timestamp_str in list_of_reminders.get(user_id):
+        timestamp += 0.00001
+        timestamp_str = str(timestamp)
     server_id = message.guild.id
     channel_id = message.channel.id
     message_id = message.id
     now = datetime.now().timestamp()
-    now_readable_time = datetime.fromtimestamp(now)
-    reminder_readable_time = datetime.fromtimestamp(timestamp)
-    list_of_reminders.get(timestamp_str).append({"reminder_timestamp": str(timestamp),
-                                                 "reminder_readable": str(reminder_readable_time),
-                                                 "now_timestamp": str(now),
-                                                 "now_readable": str(now_readable_time), "user_id": str(user_id),
-                                                 "message_id": str(message_id), "channel_id": str(channel_id),
-                                                 "server_id": str(server_id), "raw_message": str(message.content),
-                                                 "message_commands": str(message_command),
-                                                 "message_text": str(message_text)})
-    with open(path_to_reminders + os.sep + "reminders.json", "w", encoding='utf-8') as reminder_file:
-        json.dump(list_of_reminders, reminder_file, indent=2, ensure_ascii=False)
+    now_readable_time = datetime.fromtimestamp(now).replace(microsecond=0)
+    reminder_readable_time = datetime.fromtimestamp(timestamp).replace(microsecond=0)
+    list_of_reminders.get(user_id)[timestamp_str] = {"reminder_timestamp": str(timestamp),
+                                                     "reminder_readable": str(reminder_readable_time),
+                                                     "now_timestamp": str(now),
+                                                     "now_readable": str(now_readable_time), "user_id": str(user_id),
+                                                     "message_id": str(message_id), "channel_id": str(channel_id),
+                                                     "server_id": str(server_id), "raw_message": str(message.content),
+                                                     "message_commands": str(message_command),
+                                                     "message_text": str(message_text)}
+    with open(path_to_reminders + os.sep + f"{user_id}.json", "w", encoding='utf-8') as reminder_file:
+        json.dump(list_of_reminders.get(user_id), reminder_file, indent=2, ensure_ascii=False)
     await message.channel.send(f"I will remind you on {reminder_readable_time}")
 
 
@@ -215,20 +218,20 @@ async def reminder_function():
         if len(list_of_reminders) < 1:
             await asyncio.sleep(10)
             continue
-        first_reminder = float(sorted(list_of_reminders)[0])
-        if now >= first_reminder:
-            reminders = list_of_reminders.get(str(first_reminder))
-            for reminder in reminders:
+        for user_id in list_of_reminders:
+            first_reminder = float(sorted(list_of_reminders.get(user_id))[0])
+            if now >= first_reminder:
+                reminder = list_of_reminders.get(user_id).get(str(first_reminder))
                 time_to_remind, user_to_mention, server_to_mention, channel_to_mention, message_text, message_command, \
                 *_ = get_reminder_message_format(reminder)
                 embed = discord.Embed(title=(time_to_remind), description=(message_command + "\n" + message_text))
                 await bot.get_guild(server_to_mention).get_channel(channel_to_mention).send(content=user_to_mention,
                                                                                             embed=embed)
-            list_of_reminders.pop(str(first_reminder))
-            with open(path_to_reminders + os.sep + "reminders.json", "w", encoding='utf-8') as reminder_file:
-                json.dump(list_of_reminders, reminder_file, indent=2, ensure_ascii=False)
-        else:
-            await asyncio.sleep(10)
+                list_of_reminders.get(user_id).pop(str(first_reminder))
+                with open(path_to_reminders + os.sep + f"{user_id}.json", "w", encoding='utf-8') as reminder_file:
+                    json.dump(list_of_reminders.get(user_id), reminder_file, indent=2, ensure_ascii=False)
+            else:
+                await asyncio.sleep(10)
 
 
 @bot.group(aliases=["reminder"], pass_context=True)
@@ -239,8 +242,31 @@ async def remindme(ctx):
 
 @remindme.command(aliases=["remove"], pass_context=True)
 async def delete(ctx, index: int):
-    # TODO: Make each user their own file in reminder folder
-    print("delete")
+    message = ctx.message
+    user_id = str(message.author.id)
+    reminder_time = str(sorted(list_of_reminders.get(user_id))[index])
+    reminder = list_of_reminders.get(user_id).get(reminder_time)
+    *_, message_text, message_command, message_time, _ = get_reminder_message_format(reminder)
+    message_to_send = f"```\n{index} : {message_time}:\n{message_command}\n{message_text}\n```"
+    try:
+        # Get confirmation. Sleep so that own message doesn't count as reply
+        embed = discord.Embed(title="Confirm deletion of (y/n)",
+                              description=message_to_send)
+        await message.channel.send(content=f"<@{user_id}>", embed=embed)
+
+        def check(m):
+            return m.author == message.author
+
+        confirmation = await bot.wait_for('message', check=check, timeout=10.0)
+    except asyncio.TimeoutError:
+        return await message.channel.send('Sorry, you took too long.')
+    if str(confirmation.content).lower().startswith("y"):
+        list_of_reminders.get(user_id).pop(reminder_time)
+        with open(path_to_reminders + os.sep + f"{user_id}.json", "w", encoding='utf-8') as reminder_file:
+            json.dump(list_of_reminders.get(user_id), reminder_file, indent=2, ensure_ascii=False)
+        embed = discord.Embed(title=("Deleted"),
+                              description=(message_to_send))
+        await message.channel.send(content=f"<@{user_id}>", embed=embed)
 
 
 @remindme.command(pass_context=True)
@@ -248,16 +274,16 @@ async def list(ctx):
     message = ctx.message
     author_id = message.author.id
     messages_to_send = []
-    index = 0
-    for reminder_time in sorted(list_of_reminders):
-        for reminder in list_of_reminders.get(reminder_time):
-            time_to_remind, user_to_mention, server_to_mention, channel_to_mention, message_text, message_command, \
-            message_time, user_id = get_reminder_message_format(reminder)
-            if user_id == author_id:
-                current_message = f"```\n{index} : {message_time} -> {time_to_remind}:\n{message_command}\n{message_text}" \
-                                  f"\n```"
-                messages_to_send.append(current_message)
-                index += 1
+    if str(author_id) not in list_of_reminders:
+        await message.channel.send("You don't have any reminders")
+        return
+    for index, reminder_time in enumerate(sorted(list_of_reminders.get(str(author_id)))):
+        reminder = list_of_reminders.get(str(author_id)).get(reminder_time)
+        time_to_remind, user_to_mention, server_to_mention, channel_to_mention, message_text, message_command, \
+        message_time, user_id = get_reminder_message_format(reminder)
+        current_message = f"```\n{index} : {message_time} -> {time_to_remind}:\n{message_command}\n{message_text}" \
+                          f"\n```"
+        messages_to_send.append(current_message)
     list_of_valid_messages = craft_correct_length_messages(messages_to_send)
     for valid_message in list_of_valid_messages:
         embed = discord.Embed(title="List of reminders", description=(valid_message))
@@ -265,24 +291,24 @@ async def list(ctx):
 
 
 @remindme.command(pass_context=True)
-async def date(ctx, reminder_date: str, reminder_time: str, message_text: str = ""):
+async def date(ctx, reminder_date: str, reminder_time: str, message_text: str = "", *args):
     reminder_timestamp = get_valid_date(reminder_date, reminder_time)
     message = ctx.message
     # Return if date is incorrect
     if reminder_timestamp is None:
         return await message.channel.send(INCORRECT_REMINDER_FORMAT)
     message_command = " ".join([COMMAND_PREFIX + str(ctx.command), reminder_date, reminder_time])
-    await make_reminder(message, message_command, message_text, reminder_timestamp)
+    await make_reminder(message, message_command, f"{message_text} {' '.join(args)}", reminder_timestamp)
 
 
 @remindme.command(aliases=['time'], pass_context=True)
-async def delta_time(ctx, time_amount: int, time_measure: str, message_text: str = ""):
+async def delta_time(ctx, time_amount: int, time_measure: str, message_text: str = "", *args):
     message = ctx.message
     reminder_timestamp = get_date_with_delta(time_amount, time_measure)
     message_command = " ".join([COMMAND_PREFIX + str(ctx.command), str(time_amount), time_measure])
     if reminder_timestamp is None:
         return await message.channel.send(INCORRECT_REMINDER_FORMAT)
-    await make_reminder(message, message_command, message_text, reminder_timestamp)
+    await make_reminder(message, message_command, f"{message_text} {' '.join(args)}", reminder_timestamp)
 
 
 bot.run(token)

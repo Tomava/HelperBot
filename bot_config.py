@@ -3,6 +3,7 @@ import json
 from pathlib import Path
 
 EMBED_MESSAGE_MAX_CHARACTERS = 2048
+MAXIMUM_REMINDERS = 200
 list_of_commands = {"!delete x": "This command deletes x amount of messages",
                     "!noclean": "I will automatically clean youtube links unless the message starts with this command",
                     "!count x": "I will count to x with about a second between messages. Use !count stop to stop counting",
@@ -54,22 +55,10 @@ def get_reminders():
     Returns reminders as dictionary
     :return: dict
     """
-    if not os.path.exists(path_to_reminders + os.sep + "reminders.json"):
+    list_of_reminders = {}
+    if len(os.listdir(path_to_reminders)) < 1:
         return {}
-    else:
-        with open(path_to_reminders + os.sep + "reminders.json", "r", encoding='utf-8') as reminder_file:
-            list_of_reminders = dict(json.load(reminder_file))
-        return list_of_reminders
-
-
-def get_reminder_amounts():
-    """
-    Get reminder amounts by user
-    :return:
-    """
-    if not os.path.exists(path_to_reminders + os.sep + "reminders_amounts.json"):
-        return {}
-    else:
-        with open(path_to_reminders + os.sep + "reminders_amounts.json", "r", encoding='utf-8') as amount_file:
-            reminder_amounts = dict(json.load(amount_file))
-        return reminder_amounts
+    for reminder_file_name in os.listdir(path_to_reminders):
+        with open(path_to_reminders + os.sep + reminder_file_name, "r", encoding='utf-8') as reminder_file:
+            list_of_reminders[reminder_file_name[:-5]] = dict(json.load(reminder_file))
+    return list_of_reminders
