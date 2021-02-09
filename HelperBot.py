@@ -126,6 +126,47 @@ def get_date_with_delta(time_amount, time_measure):
     return notify_time
 
 
+def get_reminder_message_format(reminder):
+    """
+    Returns all useful info from a given reminder
+    :param reminder: dict
+    :return: str, str, int, int, str, str, str
+    """
+    time_to_remind = str(reminder.get("reminder_readable"))
+    message_time = str(reminder.get("now_readable"))
+    user_to_mention = str(f"<@{reminder.get('user_id')}>")
+    user_id = int(reminder.get('user_id'))
+    server_to_mention = int(reminder.get('server_id'))
+    channel_to_mention = int(reminder.get('channel_id'))
+    message_text = str(reminder.get('message_text'))
+    message_command = str(reminder.get('message_commands'))
+    return time_to_remind, user_to_mention, server_to_mention, channel_to_mention, message_text, message_command, \
+           message_time, user_id
+
+
+def craft_correct_length_messages(list_of_message_pieces):
+    """
+    Crafts a list with messages that don't exceed EMBED_MESSAGE_MAX_CHARACTERS
+    :param list_of_message_pieces: list
+    :return: list
+    """
+    current_message = ""
+    list_of_new_pieces = []
+    for piece in list_of_message_pieces:
+        # Make this one message alone doesn't exceed max character length
+        if len(piece) > EMBED_MESSAGE_MAX_CHARACTERS:
+            piece = piece[:EMBED_MESSAGE_MAX_CHARACTERS]
+        # If current and previous messages exceed max length, add crafted message to list
+        if (len(piece) + len(current_message)) >= EMBED_MESSAGE_MAX_CHARACTERS:
+            list_of_new_pieces.append(current_message)
+            # Clear current_message
+            current_message = ""
+        # Add this message to current_message
+        current_message += piece
+    list_of_new_pieces.append(current_message)
+    return list_of_new_pieces
+
+
 async def make_reminder(message, message_command, message_text, timestamp):
     """
     Makes a reminder with a given message and date
@@ -178,16 +219,11 @@ async def reminder_function():
         if now >= first_reminder:
             reminders = list_of_reminders.get(str(first_reminder))
             for reminder in reminders:
-                time_to_remind = reminder.get("reminder_readable")
-                user_to_mention = f"<@{reminder.get('user_id')}>"
-                server_to_mention = reminder.get('server_id')
-                channel_to_mention = reminder.get('channel_id')
-                message_text = reminder.get('message_text')
-                message_command = reminder.get('message_commands')
-                embed = discord.Embed(title=(str(time_to_remind)),
-                                      description=(message_command + "\n" + message_text))
-                await bot.get_guild(int(server_to_mention)).get_channel(int(channel_to_mention)).send(
-                    content=user_to_mention, embed=embed)
+                time_to_remind, user_to_mention, server_to_mention, channel_to_mention, message_text, message_command, \
+                *_ = get_reminder_message_format(reminder)
+                embed = discord.Embed(title=(time_to_remind), description=(message_command + "\n" + message_text))
+                await bot.get_guild(server_to_mention).get_channel(channel_to_mention).send(content=user_to_mention,
+                                                                                            embed=embed)
             list_of_reminders.pop(str(first_reminder))
             with open(path_to_reminders + os.sep + "reminders.json", "w", encoding='utf-8') as reminder_file:
                 json.dump(list_of_reminders, reminder_file, indent=2, ensure_ascii=False)
@@ -208,7 +244,23 @@ async def delete(ctx):
 
 @remindme.command(pass_context=True)
 async def list(ctx):
-    print("list")
+    message = ctx.message
+    author_id = message.author.id
+    messages_to_send = []
+    index = 0
+    for reminder_time in sorted(list_of_reminders):
+        for reminder in list_of_reminders.get(reminder_time):
+            time_to_remind, user_to_mention, server_to_mention, channel_to_mention, message_text, message_command, \
+            message_time, user_id = get_reminder_message_format(reminder)
+            if user_id == author_id:
+                current_message = f"```\n{index} : {message_time} -> {time_to_remind}:\n{message_command}\n{message_text}" \
+                                  f"\n```"
+                messages_to_send.append(current_message)
+                index += 1
+    list_of_valid_messages = craft_correct_length_messages(messages_to_send)
+    for valid_message in list_of_valid_messages:
+        embed = discord.Embed(title="List of reminders", description=(valid_message))
+        await message.channel.send(content=f"<@{user_id}>", embed=embed)
 
 
 @remindme.command(pass_context=True)
