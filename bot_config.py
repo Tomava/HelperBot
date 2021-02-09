@@ -29,7 +29,7 @@ list_of_time_measures = {"seconds": ["sec", "secs", "second", "seconds"],
                          "months": ["month", "months"],
                          "years": ["year", "years"]
                          }
-incorrect_reminder_format = ("Your message wasn't formatted correctly\n"
+INCORRECT_REMINDER_FORMAT = ("Your message wasn't formatted correctly\n"
                              "Correct format is: !remindme x [Time Measure] where x is the amount of time measures\n"
                              "Or !remindme dd.mm.yyyy hh.mm[.ss]\n"
                              "Or !remindme tomorrow/today hh.mm[.ss]\n"

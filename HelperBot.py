@@ -111,7 +111,7 @@ def get_date_with_delta(time_amount, time_measure):
     :param time_measure: str, E.g. seconds, mins
     :return: Datetime timestamp
     """
-    now = datetime.now()
+    now = datetime.now().replace(microsecond=0)
     # Verify that valid time measure is used
     for time_name in list_of_time_measures:
         if time_measure in list_of_time_measures.get(time_name):
@@ -205,7 +205,7 @@ async def make_reminder(message, message_command, message_text, timestamp):
 
 async def reminder_function():
     """
-    Send reminders
+    Checks reminders every 10 seconds and send reminders
     :return: nothing
     """
     global reminder_task_started
@@ -238,7 +238,8 @@ async def remindme(ctx):
 
 
 @remindme.command(aliases=["remove"], pass_context=True)
-async def delete(ctx):
+async def delete(ctx, index: int):
+    # TODO: Make each user their own file in reminder folder
     print("delete")
 
 
@@ -265,19 +266,23 @@ async def list(ctx):
 
 @remindme.command(pass_context=True)
 async def date(ctx, reminder_date: str, reminder_time: str, message_text: str = ""):
-    reminder_date_and_time = get_valid_date(reminder_date, reminder_time)
+    reminder_timestamp = get_valid_date(reminder_date, reminder_time)
     message = ctx.message
     # Return if date is incorrect
-    if reminder_date_and_time is None:
-        return await message.channel.send(incorrect_reminder_format)
+    if reminder_timestamp is None:
+        return await message.channel.send(INCORRECT_REMINDER_FORMAT)
     message_command = " ".join([COMMAND_PREFIX + str(ctx.command), reminder_date, reminder_time])
-    await make_reminder(message, message_command, message_text, reminder_date_and_time)
+    await make_reminder(message, message_command, message_text, reminder_timestamp)
 
 
 @remindme.command(aliases=['time'], pass_context=True)
-async def delta_time(ctx, time_amount: int, time_measure: str):
-    reminder_date = get_date_with_delta(time_amount, time_measure)
-    print(reminder_date)
+async def delta_time(ctx, time_amount: int, time_measure: str, message_text: str = ""):
+    message = ctx.message
+    reminder_timestamp = get_date_with_delta(time_amount, time_measure)
+    message_command = " ".join([COMMAND_PREFIX + str(ctx.command), str(time_amount), time_measure])
+    if reminder_timestamp is None:
+        return await message.channel.send(INCORRECT_REMINDER_FORMAT)
+    await make_reminder(message, message_command, message_text, reminder_timestamp)
 
 
 bot.run(token)
