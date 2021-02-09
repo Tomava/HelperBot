@@ -111,7 +111,7 @@ def get_date_with_delta(time_amount, time_measure):
     :param time_measure: str, E.g. seconds, mins
     :return: Datetime timestamp
     """
-    now = datetime.now().timestamp()
+    now = datetime.now()
     # Verify that valid time measure is used
     for time_name in list_of_time_measures:
         if time_measure in list_of_time_measures.get(time_name):
@@ -120,7 +120,7 @@ def get_date_with_delta(time_amount, time_measure):
         return
     try:
         time_measure_to_use = {correct_time_measure: time_amount}
-        notify_time = datetime.timestamp(datetime.fromtimestamp(now) + relativedelta(**time_measure_to_use))
+        notify_time = datetime.timestamp(now + relativedelta(**time_measure_to_use))
     except OSError:
         return
     return notify_time
