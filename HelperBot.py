@@ -51,7 +51,7 @@ async def on_command_error(ctx, error):
         raise error
 
 
-@bot.command(aliases=["remove"])
+@bot.command(aliases=["remove"], description="Deletes given amount of messages")
 async def delete(ctx, how_many: int):
     message = ctx.message
     private = False
@@ -85,30 +85,29 @@ async def delete(ctx, how_many: int):
         return await message.channel.send('Sorry, you took too long.')
 
 
-@bot.group(aliases=["reminder"], pass_context=True)
+@bot.group(name="reminder", aliases=["remindme"], pass_context=True)
 async def remindme(ctx):
     if ctx.invoked_subcommand is None:
         print("No subcommand")
 
 
-@remindme.command(aliases=["remove"], pass_context=True)
+@remindme.command(name="remove", aliases=["delete"], pass_context=True, description="Deletes reminder at given index")
 async def delete(ctx, index: int):
     await reminder.delete(ctx, index)
 
 
-@remindme.command(aliases=["list"], pass_context=True)
+@remindme.command(name="list", pass_context=True, description="Lists all reminders")
 async def list_reminders(ctx):
     await reminder.list_reminders(ctx)
 
 
-@remindme.command(pass_context=True)
+@remindme.command(pass_context=True, description="Reminds at a given date and time")
 async def date(ctx, reminder_date: str, reminder_time: str, message_text: str = "", *args):
     await reminder.date(ctx, reminder_date, reminder_time, message_text, *args)
 
 
-@remindme.command(aliases=['time'], pass_context=True)
+@remindme.command(name="time",  pass_context=True, description="Reminds in a given amount amount of [Time Measures]")
 async def delta_time(ctx, time_amount: int, time_measure: str, message_text: str = "", *args):
     await reminder.delta_time(ctx, time_amount, time_measure, message_text, *args)
-
 
 bot.run(token)
