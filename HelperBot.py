@@ -8,7 +8,7 @@ import time
 from image_downloader import download_image
 from HelperBotConstants import *
 import HelperBotFunctions
-import Reminder
+import HelperBotReminder
 
 HelperBotFunctions.make_dirs()
 description = ""
@@ -18,7 +18,7 @@ bot = commands.Bot(command_prefix=COMMAND_PREFIX, description=description, inten
 load_dotenv(PATH_TO_DISCORD + os.sep + "HelperBoyToken.env")
 token = os.getenv('DISCORD_TOKEN')
 reminder_task_started = False
-reminder = Reminder.Reminder(bot)
+reminder = HelperBotReminder.Reminder(bot)
 
 
 # TODO: Make reminder class that has self.bot and list_of_reminders as attributes
