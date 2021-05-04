@@ -42,12 +42,13 @@ def get_reminder_message_format(reminder):
     message_time = str(reminder.get("now_readable"))
     user_to_mention = str(f"<@{reminder.get('user_id')}>")
     user_id = int(reminder.get('user_id'))
-    server_to_mention = int(reminder.get('server_id'))
-    channel_to_mention = int(reminder.get('channel_id'))
+    server_id = int(reminder.get('server_id'))
+    channel_id = int(reminder.get('channel_id'))
     message_text = str(reminder.get('message_text'))
     message_command = str(reminder.get('message_commands'))
-    return time_to_remind, user_to_mention, server_to_mention, channel_to_mention, message_text, message_command, \
-           message_time, user_id
+    message_id = str(reminder.get('message_id'))
+    return time_to_remind, user_to_mention, server_id, channel_id, message_text, message_command, \
+           message_time, user_id, message_id
 
 
 def get_valid_date(reminder_date, reminder_time):
@@ -110,7 +111,7 @@ class Reminder:
         user_id = str(message.author.id)
         reminder_time = str(sorted(self.__list_of_reminders.get(user_id))[index])
         reminder = self.__list_of_reminders.get(user_id).get(reminder_time)
-        *_, message_text, message_command, message_time, _ = get_reminder_message_format(reminder)
+        *_, message_text, message_command, message_time, _, _ = get_reminder_message_format(reminder)
         message_to_send = f"```\n{index} : {message_time}:\n{message_command}\n{message_text}\n```"
         try:
             # Get confirmation. Sleep so that own message doesn't count as reply
@@ -140,8 +141,8 @@ class Reminder:
             return
         for index, reminder_time in enumerate(sorted(self.__list_of_reminders.get(str(author_id)))):
             reminder = self.__list_of_reminders.get(str(author_id)).get(reminder_time)
-            time_to_remind, user_to_mention, server_to_mention, channel_to_mention, message_text, message_command, \
-            message_time, user_id = get_reminder_message_format(reminder)
+            time_to_remind, user_to_mention, server_id, channel_id, message_text, message_command, \
+            message_time, user_id, message_id = get_reminder_message_format(reminder)
             current_message = f"```\n{index} : {message_time} -> {time_to_remind}:\n{message_command}\n{message_text}" \
                               f"\n```"
             messages_to_send.append(current_message)
@@ -223,13 +224,14 @@ class Reminder:
                 first_reminder = float(sorted(self.__list_of_reminders.get(user_id))[0])
                 if now >= first_reminder:
                     reminder = self.__list_of_reminders.get(user_id).get(str(first_reminder))
-                    time_to_remind, user_to_mention, server_to_mention, channel_to_mention, message_text, message_command, \
-                    *_ = get_reminder_message_format(reminder)
-                    embed = discord.Embed(title=time_to_remind, description=(message_command + "\n" + message_text))
-                    await self.__bot.get_guild(server_to_mention).get_channel(channel_to_mention).send(
-                        content=user_to_mention,
-                        embed=embed)
-                    self.__list_of_reminders.get(user_id).pop(str(first_reminder))
-                    self.write_reminders_to_disk(user_id)
+                    time_to_remind, user_to_mention, server_id, channel_id, message_text, message_command, \
+                    message_time, user_id, message_id = get_reminder_message_format(reminder)
+                    title = f"{time_to_remind} (https://discord.com/channels/{server_id}/{channel_id}/" \
+                            f"{message_id})"
+                    embed = discord.Embed(title=title, description=(message_command + "\n" + message_text))
+                    await self.__bot.get_guild(server_id).get_channel(channel_id).send(content=user_to_mention,
+                                                                                       embed=embed)
+                    self.__list_of_reminders.get(str(user_id)).pop(str(first_reminder))
+                    self.write_reminders_to_disk(str(user_id))
                 else:
                     await asyncio.sleep(10)
