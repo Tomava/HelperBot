@@ -54,6 +54,20 @@ async def on_command_error(ctx, error):
         raise error
 
 
+@bot.event
+async def on_raw_reaction_add(payload):
+    if payload.user_id != bot.user.id:
+        msg = await bot.get_guild(payload.guild_id).get_channel(payload.channel_id).fetch_message(payload.message_id)
+        await msg.add_reaction(payload.emoji)
+
+
+@bot.event
+async def on_raw_reaction_remove(payload):
+    if payload.user_id != bot.user.id:
+        msg = await bot.get_guild(payload.guild_id).get_channel(payload.channel_id).fetch_message(payload.message_id)
+        await msg.remove_reaction(payload.emoji, bot.user)
+
+
 @bot.listen()
 async def on_message(message):
     # Don't react to own messages
