@@ -106,6 +106,10 @@ class Reminder:
         with open(PATH_TO_REMINDERS + os.sep + f"{user_id}.json", "w", encoding='utf-8') as reminder_file:
             json.dump(self.__list_of_reminders.get(user_id), reminder_file, indent=2, ensure_ascii=False)
 
+    async def help(self, ctx):
+        message = ctx.message
+        await message.channel.send(REMINDER_HELP)
+
     async def delete(self, ctx, index: int):
         message = ctx.message
         user_id = str(message.author.id)
@@ -156,7 +160,7 @@ class Reminder:
         message = ctx.message
         # Return if date is incorrect
         if reminder_timestamp is None:
-            return await message.channel.send(INCORRECT_REMINDER_FORMAT)
+            return await message.channel.send(REMINDER_HELP)
         message_command = " ".join([COMMAND_PREFIX + str(ctx.command), reminder_date, reminder_time])
         await self.make_reminder(message, message_command, f"{message_text} {' '.join(args)}", reminder_timestamp)
 
@@ -165,7 +169,7 @@ class Reminder:
         reminder_timestamp = get_date_with_delta(time_amount, time_measure)
         message_command = " ".join([COMMAND_PREFIX + str(ctx.command), str(time_amount), time_measure])
         if reminder_timestamp is None:
-            return await message.channel.send(INCORRECT_REMINDER_FORMAT)
+            return await message.channel.send(REMINDER_HELP)
         await self.make_reminder(message, message_command, f"{message_text} {' '.join(args)}", reminder_timestamp)
 
     async def make_reminder(self, message, message_command, message_text, timestamp):

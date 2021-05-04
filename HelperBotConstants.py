@@ -32,17 +32,23 @@ LIST_OF_TIME_MEASURES = {"seconds": ["sec", "secs", "second", "seconds"],
                          "months": ["month", "months"],
                          "years": ["year", "years"]
                          }
-INCORRECT_REMINDER_FORMAT = ("Your message wasn't formatted correctly\n"
-                             "Correct format is: !remindme x [Time Measure] where x is the amount of time measures\n"
-                             "Or !remindme dd.mm.yyyy hh.mm[.ss]\n"
-                             "Or !remindme tomorrow/today hh.mm[.ss]\n"
-                             "Or !remindme list\n"
-                             "Or !remindme delete x\n"
-                             "To get a list of time measures, try !timemeasures")
+REMINDER_HELP = ("```Your message wasn't formatted correctly\n"
+                 "Correct formats are: (using !remindme / !reminder)\n"
+                 "!remindme in x [Time Measure]\n"
+                 "!remindme time x [Time Measure]\n"
+                 "!remindme on dd.mm.yyyy hh.mm[.ss]\n"
+                 "!remindme at dd.mm.yyyy hh.mm[.ss]\n"
+                 "!remindme date dd.mm.yyyy hh.mm[.ss]\n"
+                 "!remindme tomorrow/today hh.mm[.ss]\n"
+                 "!remindme list\n"
+                 "!remindme remove/delete x\n"
+                 "!remindme help\n\n"
+                 "To get a list of time measures, try\n"
+                 "!remindme timemeasures```")
+
 REMOVE_FROM_LINK = ["list", "index"]
 
 # Path to home folder
 HOME = str(Path.home())
 PATH_TO_DISCORD = HOME + os.sep + "Discord"
 PATH_TO_REMINDERS = HOME + os.sep + "Discord" + os.sep + "reminders"
-

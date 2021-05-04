@@ -115,7 +115,12 @@ async def delete(ctx, how_many: int):
 @bot.group(name="reminder", aliases=["remindme"], pass_context=True)
 async def remindme(ctx):
     if ctx.invoked_subcommand is None:
-        print("No subcommand")
+        await reminder.help(ctx)
+
+
+@remindme.command(name="help", pass_context=True, description="Help for reminders")
+async def help(ctx):
+    await reminder.help(ctx)
 
 
 @remindme.command(name="remove", aliases=["delete"], pass_context=True, description="Deletes reminder at given index")
