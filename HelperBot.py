@@ -1,4 +1,5 @@
 import discord
+import logging
 from discord.ext import commands
 import asyncio
 import random
@@ -6,10 +7,12 @@ from dotenv import load_dotenv
 import json
 import time
 from image_downloader import download_image
+
 from HelperBotConstants import *
 import HelperBotFunctions
 import HelperBotReminder
 
+logging.basicConfig(level=logging.INFO)
 HelperBotFunctions.make_dirs()
 description = ""
 intents = discord.Intents.default()
@@ -21,7 +24,6 @@ reminder_task_started = False
 reminder = HelperBotReminder.Reminder(bot)
 
 
-# TODO: Make reminder class that has self.bot and list_of_reminders as attributes
 # TODO: Use scheduler on reminders
 # TODO: Add weekday to reminders
 # TODO: def start()
@@ -49,6 +51,22 @@ async def on_command_error(ctx, error):
     else:
         print("Error:", error)
         raise error
+
+
+@bot.listen()
+async def on_message(message):
+    # Don't react to own messages
+    if message.author.id == bot.user.id:
+        return
+    message_content = message.content
+    new_message_content = HelperBotFunctions.clean_youtube_links(message_content)
+    # If message was changed, send new one and remove old
+    if new_message_content != message_content:
+        # Remove message
+        await message.delete()
+        # Send new message
+        await message.channel.send(new_message_content)
+    # await bot.invoke(message)
 
 
 @bot.command(aliases=["remove"], description="Deletes given amount of messages")
@@ -101,13 +119,18 @@ async def list_reminders(ctx):
     await reminder.list_reminders(ctx)
 
 
-@remindme.command(pass_context=True, description="Reminds at a given date and time")
+@remindme.command(name="date", aliases=["on", "at"], pass_context=True, description="Reminds at a given date and time")
 async def date(ctx, reminder_date: str, reminder_time: str, message_text: str = "", *args):
     await reminder.date(ctx, reminder_date, reminder_time, message_text, *args)
 
 
-@remindme.command(name="time",  pass_context=True, description="Reminds in a given amount amount of [Time Measures]")
+@remindme.command(name="time",  aliases=["in"], pass_context=True, description="Reminds in a given amount amount of [Time Measures]")
 async def delta_time(ctx, time_amount: int, time_measure: str, message_text: str = "", *args):
     await reminder.delta_time(ctx, time_amount, time_measure, message_text, *args)
+
+
+@bot.command(name="noclean", aliases=["nc"], description="Don't clean youtube link")
+async def noclean(ctx):
+    return
 
 bot.run(token)

@@ -38,7 +38,7 @@ INCORRECT_REMINDER_FORMAT = ("Your message wasn't formatted correctly\n"
                              "Or !remindme list\n"
                              "Or !remindme delete x\n"
                              "To get a list of time measures, try !timemeasures")
-
+REMOVE_FROM_LINK = ["list", "index"]
 
 # Path to home folder
 HOME = str(Path.home())
