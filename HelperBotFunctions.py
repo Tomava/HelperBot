@@ -11,21 +11,39 @@ def make_dirs():
         os.makedirs(PATH_TO_REMINDERS)
 
 
-def craft_correct_length_messages(list_of_message_pieces):
+def craft_message_link(server_id, channel_id, message_id):
     """
-    Crafts a list with messages that don't exceed EMBED_MESSAGE_MAX_CHARACTERS
+    Crafts a message link from given ids
+    :param server_id: str/int
+    :param channel_id: str/int
+    :param message_id: str/int
+    :return: str, Link
+    """
+    return f"https://discord.com/channels/{server_id}/{channel_id}/{message_id}"
+
+
+def craft_correct_length_messages(list_of_message_pieces, embed_message=False, make_code_format=False):
+    """
+    Crafts a list with messages that don't exceed MESSAGE_MAX_CHARACTERS
     :param list_of_message_pieces: list
+    :param embed_message: bool, If true, will use EMBED_MESSAGE_MAX_CHARACTERS instead of MESSAGE_MAX_CHARACTERS
+    :param make_code_format: bool, If true will add ``` characters in the end and start of the message
     :return: list
     """
     current_message = ""
     list_of_new_pieces = []
+    max_characters = MESSAGE_MAX_CHARACTERS
+    if embed_message:
+        max_characters = EMBED_MESSAGE_MAX_CHARACTERS
+    if make_code_format:
+        max_characters -= 6
     for piece in list_of_message_pieces:
         piece = str(piece)
         # Make sure this one message alone doesn't exceed max character length
-        if len(piece) > EMBED_MESSAGE_MAX_CHARACTERS:
-            piece = piece[:EMBED_MESSAGE_MAX_CHARACTERS]
+        if len(piece) > max_characters:
+            piece = piece[:max_characters]
         # If current and previous messages exceed max length, add crafted message to list
-        if (len(piece) + len(current_message)) >= EMBED_MESSAGE_MAX_CHARACTERS:
+        if (len(piece) + len(current_message)) >= max_characters:
             # If current message is empty, don't add it
             if current_message != "":
                 list_of_new_pieces.append(current_message)
@@ -34,6 +52,11 @@ def craft_correct_length_messages(list_of_message_pieces):
         # Add this message to current_message
         current_message += piece
     list_of_new_pieces.append(current_message)
+    if make_code_format:
+        list_of_formatted_pieces = []
+        for message in list_of_new_pieces:
+            list_of_formatted_pieces.append(f"```{message}```")
+        return list_of_formatted_pieces
     return list_of_new_pieces
 
 

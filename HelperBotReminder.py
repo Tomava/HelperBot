@@ -108,7 +108,8 @@ class Reminder:
 
     async def help(self, ctx):
         message = ctx.message
-        await message.channel.send(REMINDER_HELP)
+        help_messages = HelperBotFunctions.craft_correct_length_messages([REMINDER_HELP], make_code_format=True)
+        await HelperBotFunctions.send_messages(help_messages, message.channel)
 
     async def delete(self, ctx, index: int):
         message = ctx.message
@@ -147,10 +148,12 @@ class Reminder:
             reminder = self.__list_of_reminders.get(str(author_id)).get(reminder_time)
             time_to_remind, user_to_mention, server_id, channel_id, message_text, message_command, \
             message_time, user_id, message_id = get_reminder_message_format(reminder)
-            current_message = f"```\n{index} : {message_time} -> {time_to_remind}:\n{message_command}\n{message_text}" \
-                              f"\n```"
+            link = HelperBotFunctions.craft_message_link(server_id, channel_id, message_id)
+            current_message = f"\n{index} : {message_time} -> {time_to_remind}\n({link})\n{message_command}" \
+                              f"\n{message_text}\n"
             messages_to_send.append(current_message)
-        list_of_valid_messages = HelperBotFunctions.craft_correct_length_messages(messages_to_send)
+        list_of_valid_messages = HelperBotFunctions.craft_correct_length_messages(messages_to_send, embed_message=True,
+                                                                                  make_code_format=False)
         for valid_message in list_of_valid_messages:
             embed = discord.Embed(title="List of reminders", description=valid_message)
             await message.channel.send(content=f"<@{author_id}>", embed=embed)
@@ -231,8 +234,8 @@ class Reminder:
                     reminder = self.__list_of_reminders.get(user_id).get(str(first_reminder))
                     time_to_remind, user_to_mention, server_id, channel_id, message_text, message_command, \
                     message_time, user_id, message_id = get_reminder_message_format(reminder)
-                    title = f"{time_to_remind} (https://discord.com/channels/{server_id}/{channel_id}/" \
-                            f"{message_id})"
+                    title = f"{time_to_remind} " \
+                            f"({HelperBotFunctions.craft_message_link(server_id, channel_id,message_id)})"
                     embed = discord.Embed(title=title, description=(message_command + "\n" + message_text))
                     await self.__bot.get_guild(server_id).get_channel(channel_id).send(content=user_to_mention,
                                                                                        embed=embed)

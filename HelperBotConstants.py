@@ -3,7 +3,8 @@ from pathlib import Path
 
 COMMAND_PREFIX = "!"
 
-EMBED_MESSAGE_MAX_CHARACTERS = 2000
+EMBED_MESSAGE_MAX_CHARACTERS = 2048
+MESSAGE_MAX_CHARACTERS = 2000
 MAXIMUM_REMINDERS = 200
 MAXIMUM_REMOVED_MESSAGES = 5000
 LIST_OF_COMMANDS = {"!delete x": "This command deletes x amount of messages",
@@ -32,7 +33,7 @@ LIST_OF_TIME_MEASURES = {"seconds": ["sec", "secs", "second", "seconds"],
                          "months": ["month", "months"],
                          "years": ["year", "years"]
                          }
-REMINDER_HELP = ("```Your message wasn't formatted correctly\n"
+REMINDER_HELP = ("Your message wasn't formatted correctly\n"
                  "Correct formats are: (using !remindme / !reminder)\n"
                  "!remindme in x [Time Measure]\n"
                  "!remindme time x [Time Measure]\n"
@@ -44,7 +45,7 @@ REMINDER_HELP = ("```Your message wasn't formatted correctly\n"
                  "!remindme remove/delete x\n"
                  "!remindme help\n\n"
                  "To get a list of time measures, try\n"
-                 "!remindme timemeasures```")
+                 "!remindme timemeasures")
 
 REMOVE_FROM_LINK = ["list", "index"]
 
