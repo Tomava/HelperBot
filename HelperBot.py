@@ -67,6 +67,10 @@ async def on_message(message):
         await message.delete()
         # Send new message
         await message.channel.send(new_message_content)
+    # Respond to a tag
+    if bot.user.mentioned_in(message):
+        response = random.randint(0, (len(LIST_OF_RESPONSES_TO_TAGS) - 1))
+        await message.channel.send(f"{message.author.mention}\n{LIST_OF_RESPONSES_TO_TAGS[response]}")
 
 
 @bot.command(aliases=["remove"], description="Deletes given amount of messages")
