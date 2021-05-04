@@ -11,6 +11,7 @@ from image_downloader import download_image
 from HelperBotConstants import *
 import HelperBotFunctions
 import HelperBotReminder
+from HelperBotCustomizations import *
 
 logging.basicConfig(level=logging.INFO)
 HelperBotFunctions.make_dirs()
@@ -143,5 +144,18 @@ async def time_measures(ctx):
 @bot.command(name="noclean", aliases=["nc"], description="Don't clean youtube link")
 async def noclean(ctx):
     return False
+
+
+@bot.command(name="answer", description="I will try to answer you question")
+async def answer(ctx):
+    index = random.randint(0, (len(LIST_OF_RESPONSES_TO_QUESTIONS) - 1))
+    await ctx.channel.send(LIST_OF_RESPONSES_TO_QUESTIONS[index])
+
+
+@bot.command(name="history", description="Learn about my history")
+async def history(ctx):
+    message = HelperBotFunctions.get_history_message()
+    await ctx.message.channel.send(message)
+
 
 bot.run(token)

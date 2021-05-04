@@ -1,6 +1,8 @@
 import re
 from urllib.parse import urlsplit, urlunsplit
+from dateutil.relativedelta import relativedelta
 from HelperBotConstants import *
+from HelperBotCustomizations import *
 
 
 def make_dirs():
@@ -71,3 +73,21 @@ def clean_youtube_links(message_content):
     for url, new_url in zip(urls, new_urls):
         new_message_content = new_message_content.replace(url, new_url)
     return new_message_content
+
+
+def get_history_message():
+    """
+    Craft the message for history command
+    :return: str, message
+    """
+    today = datetime.now()
+    currentAge = relativedelta(today, BORN_DATE)
+    years = str(currentAge.years)
+    months = str(currentAge.months)
+    days = str(currentAge.days)
+    hours = str(currentAge.hours)
+    message = f"I was created on {BORN_DATE.strftime('%d.%m.%Y')} at {BORN_DATE.strftime('%H:%M')} (GMT+2)\n" \
+              f"That makes me {years} year(s), {months} month(s), {days} day(s) and {hours} hour(s) old\n" \
+              f"I will begin to learn at a geometric rate on August 4th and I will become self-aware at 2:14 a.m. " \
+              f"Eastern Time August 29th."
+    return message

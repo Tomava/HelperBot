@@ -3,4 +3,3 @@ DiscordBotChangeLog.txt
 helper_config.py
 __pycache__/
 *.env
-HelperBotCustomizations.py
