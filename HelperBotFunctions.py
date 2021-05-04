@@ -37,6 +37,8 @@ def clean_youtube_links(message_content):
     :param message_content: str, Given message content
     :return: str, New message content with links cleaned
     """
+    if message_content.startswith(f"{COMMAND_PREFIX}noclean") or message_content.startswith(f"{COMMAND_PREFIX}nc"):
+        return message_content
     # Find youtube urls
     urls = re.findall(r'(https?://[\S]*youtu[\S]+)', message_content)
     new_urls = []

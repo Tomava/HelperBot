@@ -66,7 +66,7 @@ async def on_message(message):
         await message.delete()
         # Send new message
         await message.channel.send(new_message_content)
-    # await bot.invoke(message)
+
 
 
 @bot.command(aliases=["remove"], description="Deletes given amount of messages")
@@ -131,6 +131,6 @@ async def delta_time(ctx, time_amount: int, time_measure: str, message_text: str
 
 @bot.command(name="noclean", aliases=["nc"], description="Don't clean youtube link")
 async def noclean(ctx):
-    return
+    return False
 
 bot.run(token)
