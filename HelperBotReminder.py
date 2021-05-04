@@ -221,6 +221,7 @@ class Reminder:
         reminder_task_started = True
         while True:
             now = datetime.now().timestamp()
+            # If reminder list is empty
             if len(self.__list_of_reminders) < 1:
                 await asyncio.sleep(10)
                 continue
@@ -237,5 +238,4 @@ class Reminder:
                                                                                        embed=embed)
                     self.__list_of_reminders.get(str(user_id)).pop(str(first_reminder))
                     self.write_reminders_to_disk(str(user_id))
-                else:
-                    await asyncio.sleep(10)
+            await asyncio.sleep(10)
