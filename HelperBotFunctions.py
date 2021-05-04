@@ -1,4 +1,5 @@
 import re
+import asyncio
 from urllib.parse import urlsplit, urlunsplit
 from dateutil.relativedelta import relativedelta
 from HelperBotConstants import *
@@ -19,18 +20,32 @@ def craft_correct_length_messages(list_of_message_pieces):
     current_message = ""
     list_of_new_pieces = []
     for piece in list_of_message_pieces:
-        # Make this one message alone doesn't exceed max character length
+        piece = str(piece)
+        # Make sure this one message alone doesn't exceed max character length
         if len(piece) > EMBED_MESSAGE_MAX_CHARACTERS:
             piece = piece[:EMBED_MESSAGE_MAX_CHARACTERS]
         # If current and previous messages exceed max length, add crafted message to list
         if (len(piece) + len(current_message)) >= EMBED_MESSAGE_MAX_CHARACTERS:
-            list_of_new_pieces.append(current_message)
+            # If current message is empty, don't add it
+            if current_message != "":
+                list_of_new_pieces.append(current_message)
             # Clear current_message
             current_message = ""
         # Add this message to current_message
         current_message += piece
     list_of_new_pieces.append(current_message)
     return list_of_new_pieces
+
+
+async def send_messages(list_of_messages, channel):
+    """
+    Sends all messages in a list to a given channel
+    :param list_of_messages: list
+    :param channel: channel
+    :return: nothing
+    """
+    for message in list_of_messages:
+        await channel.send(message)
 
 
 def clean_youtube_links(message_content):

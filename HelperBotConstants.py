@@ -3,8 +3,9 @@ from pathlib import Path
 
 COMMAND_PREFIX = "!"
 
-EMBED_MESSAGE_MAX_CHARACTERS = 2048
+EMBED_MESSAGE_MAX_CHARACTERS = 2000
 MAXIMUM_REMINDERS = 200
+MAXIMUM_REMOVED_MESSAGES = 5000
 LIST_OF_COMMANDS = {"!delete x": "This command deletes x amount of messages",
                     "!noclean": "I will automatically clean youtube links unless the message starts with this command",
                     "!count x": "I will count to x with about a second between messages. Use !count stop to stop counting",

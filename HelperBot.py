@@ -69,7 +69,6 @@ async def on_message(message):
         await message.channel.send(new_message_content)
 
 
-
 @bot.command(aliases=["remove"], description="Deletes given amount of messages")
 async def delete(ctx, how_many: int):
     message = ctx.message
@@ -79,9 +78,14 @@ async def delete(ctx, how_many: int):
     if not private and (message.channel.name == "general"):
         await message.channel.send("Deleting messages on channel 'general' is disabled.")
         return
+    # Make sure there's not too many
+    if how_many > MAXIMUM_REMOVED_MESSAGES:
+        await message.channel.send(f"That's too many! {MAXIMUM_REMOVED_MESSAGES} is the limit")
+        return
     try:
         # Get confirmation
-        await message.channel.send("Confirm deletion of " + str(how_many) + " messages (y/n)")
+        messages = HelperBotFunctions.craft_correct_length_messages(["Confirm deletion of ", how_many, " messages (y/n)"])
+        await HelperBotFunctions.send_messages(messages, message.channel)
 
         def check(m):
             return m.author == message.author and str(m.content).lower().startswith("y")
@@ -157,5 +161,25 @@ async def history(ctx):
     message = HelperBotFunctions.get_history_message()
     await ctx.message.channel.send(message)
 
+
+@bot.command(name="roll", description="Roll a roulette")
+async def roll(ctx):
+    index = random.randint(0, (len(LIST_OF_ROLLS) - 1))
+    await ctx.channel.send(LIST_OF_ROLLS[index])
+
+
+@bot.command(name="game", description="Notify others to play with you")
+async def game(ctx, *game_name):
+    message = ctx.message
+    message_sender = message.author.nick
+    # If author has no nickname, use their username instead
+    if message_sender is None:
+        message_sender = message.author.name
+    if len(game_name) == 0:
+        message_to_send = f"@everyone\n{message_sender} wants to game with you"
+    else:
+        message_to_send = f"@everyone\n{message_sender} wants to play {' '.join(game_name)} with you"
+    messages = HelperBotFunctions.craft_correct_length_messages([message_to_send])
+    await HelperBotFunctions.send_messages(messages, message.channel)
 
 bot.run(token)
