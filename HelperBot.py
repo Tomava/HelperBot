@@ -129,6 +129,17 @@ async def delta_time(ctx, time_amount: int, time_measure: str, message_text: str
     await reminder.delta_time(ctx, time_amount, time_measure, message_text, *args)
 
 
+@remindme.command(name="timemeasures", pass_context=True, description="List of valid time measures")
+async def time_measures(ctx):
+    message = "```Time measures\n\n"
+    max_width = len(max(LIST_OF_TIME_MEASURES.keys(), key=lambda k: len(LIST_OF_TIME_MEASURES.get(k)))) + 1
+    print(max_width)
+    for key in LIST_OF_TIME_MEASURES:
+        message += f"{key + ':':<{max_width}}\t {', '.join(LIST_OF_TIME_MEASURES.get(key))}\n"
+    message += f"\n{'date:':<{max_width}}\t today, tommorrow```"
+    await ctx.message.channel.send(message)
+
+
 @bot.command(name="noclean", aliases=["nc"], description="Don't clean youtube link")
 async def noclean(ctx):
     return False
