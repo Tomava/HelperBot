@@ -116,9 +116,9 @@ class Reminder:
         with open(PATH_TO_REMINDERS + os.sep + f"{user_id}.json", "w", encoding='utf-8') as reminder_file:
             json.dump(self.__list_of_reminders.get(user_id), reminder_file, indent=2, ensure_ascii=False)
 
-    async def help(self, ctx):
+    async def reminder_help(self, ctx, incorrect_format=""):
         message = ctx.message
-        await HelperBotFunctions.send_messages([REMINDER_HELP], message.channel, make_code_format=True)
+        await HelperBotFunctions.send_messages([incorrect_format, REMINDER_HELP], message.channel, make_code_format=True)
 
     async def delete(self, ctx, index: int):
         message = ctx.message

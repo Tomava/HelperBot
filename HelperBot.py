@@ -34,7 +34,7 @@ async def on_ready():
     print(bot.user.name)
     print(bot.user.id)
     print('------')
-    await bot.change_presence(activity=discord.Game(name='!help'))
+    await bot.change_presence(activity=discord.Game(name='!reminder_help'))
     if not reminder.get_started():
         await reminder.start()
 
@@ -44,7 +44,7 @@ async def on_command_error(ctx, error):
     if hasattr(ctx.command, 'on_error'):
         print("Error:", error)
     elif isinstance(error, commands.errors.UserInputError):
-        await ctx.channel.send("Looks like your message wasn't formatted correctly.\nType !help to get correct formats")
+        await ctx.channel.send("Looks like your message wasn't formatted correctly.\nType !reminder_help to get correct formats")
     else:
         print("Error:", error)
         raise error
@@ -124,12 +124,12 @@ async def delete(ctx, how_many: int):
 @bot.group(name="reminder", aliases=["remindme"], pass_context=True)
 async def remindme(ctx):
     if ctx.invoked_subcommand is None:
-        await reminder.help(ctx)
+        await reminder.reminder_help(ctx, "Your message wasn't formatted correctly\n")
 
 
 @remindme.command(name="help", pass_context=True, description="Help for reminders")
-async def help(ctx):
-    await reminder.help(ctx)
+async def reminder_help(ctx):
+    await reminder.reminder_help(ctx)
 
 
 @remindme.command(name="remove", aliases=["delete"], pass_context=True, description="Deletes reminder at given index")
@@ -238,6 +238,21 @@ async def random_messages(ctx, how_many: int):
                                             b=random.randint(0, 255))
     message_link = HelperBotFunctions.craft_message_link(ctx.message.guild.id, channel.id, ctx.message.id)
     await HelperBotFunctions.send_embed_messages(list_of_messages, channel, "Random convo", message_link, random_colour)
+
+
+@bot.group(name="admin", pass_context=True)
+async def admin(ctx):
+    roles = ctx.message.author.roles
+    role_names = [role.name for role in roles]
+    if "Admin" not in role_names:
+        return await ctx.message.channel.send("You're not an admin!")
+    if ctx.invoked_subcommand is None:
+        await admin_help(ctx)
+
+
+@admin.command(name="help", pass_context=True, description="Help for admin")
+async def admin_help(ctx):
+    await HelperBotFunctions.send_messages([ADMIN_HELP], ctx.message.channel, make_code_format=True)
 
 
 bot.run(token)
