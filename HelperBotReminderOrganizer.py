@@ -38,11 +38,12 @@ def get_reminder_message_format(reminder):
     """
     Returns all useful info from a given reminder
     :param reminder: dict
-    :return: (user_to_mention), (time_to_remind, message_time), (user_id, server_id, channel_id, message_id),
-    (message_text, message_command, raw_message), (interval_amount, interval_measure)
+    :return: user_to_mention, (time_to_remind, time_to_remind_timestamp, message_time, message_timestamp),
+    (user_id, server_id, channel_id, message_id), (message_text, message_command, raw_message),
+    (interval_amount, interval_measure)
     """
     time_to_remind = str(reminder.get("reminder_readable"))
-    time_to_remind_timestmap = float(reminder.get("reminder_timestamp"))
+    time_to_remind_timestamp = float(reminder.get("reminder_timestamp"))
     message_time = str(reminder.get("now_readable"))
     message_timestamp = float(reminder.get("now_timestamp"))
     user_to_mention = str(f"<@{reminder.get('user_id')}>")
@@ -60,7 +61,7 @@ def get_reminder_message_format(reminder):
         interval_measure = ""
     if interval_amount is not None:
         interval_amount = int(interval_amount)
-    return user_to_mention, (time_to_remind, time_to_remind_timestmap, message_time, message_timestamp), \
+    return user_to_mention, (time_to_remind, time_to_remind_timestamp, message_time, message_timestamp), \
            (user_id, server_id, channel_id, message_id), (message_text, message_command, raw_message), \
            (interval_amount, str(interval_measure))
 
@@ -162,11 +163,12 @@ class ReminderOrganizer:
         :return: nothing
         """
         with open(PATH_TO_REMINDERS + os.sep + f"{user_id}.json", "w", encoding='utf-8') as reminder_file:
-            json.dump(self.__list_of_reminders.get(user_id), reminder_file, indent=2, ensure_ascii=False)
+            json.dump(dict(sorted(self.__list_of_reminders.get(user_id).items())), reminder_file, indent=2, ensure_ascii=False)
 
     async def reminder_help(self, ctx, incorrect_format=""):
         message = ctx.message
-        await HelperBotFunctions.send_messages([incorrect_format, REMINDER_HELP], message.channel, make_code_format=True)
+        await HelperBotFunctions.send_messages([incorrect_format, REMINDER_HELP], message.channel,
+                                               make_code_format=True)
 
     async def delete(self, ctx, index: int):
         message = ctx.message
@@ -179,7 +181,7 @@ class ReminderOrganizer:
         try:
             # Get confirmation
             await HelperBotFunctions.send_embed_messages([message_to_send], message.channel, "Confirm deletion of (y/n)"
-                                                         , content=f"<@{user_id}>", make_code_format=True)
+                                                         , content=f"<@{user_id}>")
 
             def check(m):
                 return m.author == message.author
@@ -191,7 +193,7 @@ class ReminderOrganizer:
             self.__list_of_reminders.get(user_id).pop(reminder_time)
             self.write_reminders_to_disk(user_id)
             await HelperBotFunctions.send_embed_messages([message_to_send], message.channel, "Deleted"
-                                                         , content=f"<@{user_id}>", make_code_format=True)
+                                                         , content=f"<@{user_id}>")
 
     async def list_reminders(self, ctx):
         message = ctx.message
@@ -243,7 +245,7 @@ class ReminderOrganizer:
         if interval_timestamp is None:
             return await message.channel.send(REMINDER_HELP)
         # Check that interval is not too short
-        if round(interval_timestamp - reminder_timestamp) < MINIMUM_INTERVAL_SECONDS:
+        if interval_timestamp - reminder_timestamp < MINIMUM_INTERVAL_SECONDS:
             return await message.channel.send(f"That interval is too short (min {round(MINIMUM_INTERVAL_SECONDS / 60)}"
                                               f" minutes)")
         reminder["interval_amount"] = interval
@@ -258,12 +260,18 @@ class ReminderOrganizer:
             await HelperBotFunctions.send_embed_messages(messages_to_send, message.channel, title, content)
 
     async def remove_interval(self, message, reminder):
+        if reminder is None:
+            return
+        (_, (time_to_remind, time_to_remind_timestamp, message_time, message_timestamp), _, _,
+         (interval_amount, interval_measure)) = get_reminder_message_format(reminder)
+        user_id = str(message.author.id)
+        index = sorted(self.__list_of_reminders.get(user_id)).index(str(time_to_remind_timestamp))
+        if interval_amount is None:
+            return await HelperBotFunctions.send_messages([f"There's no interval set to reminder {index}"],
+                                                          message.channel)
         reminder["interval_amount"] = None
         reminder["interval_measure"] = None
-        user_id = str(message.author.id)
         self.write_reminders_to_disk(user_id)
-        _, (_, timestamp, _, _), *_ = get_reminder_message_format(reminder)
-        index = sorted(self.__list_of_reminders.get(user_id)).index(str(timestamp))
         messages_to_send = [self.get_reminder_text(reminder, index)]
         title = "Interval removed"
         content = f"<@{user_id}>"
