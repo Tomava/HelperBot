@@ -21,13 +21,11 @@ intents.members = True
 bot = commands.Bot(command_prefix=COMMAND_PREFIX, description=description, intents=intents)
 load_dotenv(PATH_TO_DISCORD + os.sep + "HelperBoyToken.env")
 token = os.getenv('DISCORD_TOKEN')
-reminder_task_started = False
 reminder = HelperBotReminder.Reminder(bot)
 
 
 # TODO: Use scheduler on reminders
 # TODO: Add weekday to reminders
-# TODO: def start()
 
 
 @bot.event
@@ -37,9 +35,7 @@ async def on_ready():
     print(bot.user.id)
     print('------')
     await bot.change_presence(activity=discord.Game(name='!help'))
-    global reminder_task_started
-    if not reminder_task_started:
-        reminder_task_started = True
+    if not reminder.get_started():
         await reminder.start()
 
 

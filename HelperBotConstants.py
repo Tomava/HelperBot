@@ -11,6 +11,7 @@ MAXIMUM_REMOVED_MESSAGES = 5000
 MAX_RANDOM_MESSAGES = 20
 EPOCH_DATETIME = datetime(1970, 1, 1)
 SECONDS_PER_DAY = 24 * 60 * 60
+DATE_FORMAT = "%a %Y-%m-%d %H:%M:%S"
 LIST_OF_COMMANDS = {"!delete x": "This command deletes x amount of messages",
                     "!noclean": "I will automatically clean youtube links unless the message starts with this command",
                     "!count x": "I will count to x with about a second between messages. Use !count stop to stop counting",

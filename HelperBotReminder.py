@@ -36,7 +36,8 @@ def get_reminder_message_format(reminder):
     """
     Returns all useful info from a given reminder
     :param reminder: dict
-    :return: str, str, int, int, str, str, str
+    :return: time_to_remind, user_to_mention, server_id, channel_id, message_text, message_command, message_time,
+    user_id, message_id, raw_message
     """
     time_to_remind = str(reminder.get("reminder_readable"))
     message_time = str(reminder.get("now_readable"))
@@ -47,8 +48,9 @@ def get_reminder_message_format(reminder):
     message_text = str(reminder.get('message_text'))
     message_command = str(reminder.get('message_commands'))
     message_id = str(reminder.get('message_id'))
+    raw_message = str(reminder.get('raw_message'))
     return time_to_remind, user_to_mention, server_id, channel_id, message_text, message_command, \
-           message_time, user_id, message_id
+           message_time, user_id, message_id, raw_message
 
 
 def get_valid_date(reminder_date, reminder_time):
@@ -90,9 +92,17 @@ class Reminder:
     def __init__(self, bot):
         self.__bot = bot
         self.__list_of_reminders = get_reminders()
+        self.__reminder_task_started = False
 
     async def start(self):
+        # If it has already been started, return
+        if self.__reminder_task_started:
+            return
+        self.__reminder_task_started = True
         await self.reminder_function()
+
+    def get_started(self):
+        return self.__reminder_task_started
 
     def get_list_of_reminders(self):
         return self.__list_of_reminders
@@ -115,13 +125,12 @@ class Reminder:
         user_id = str(message.author.id)
         reminder_time = str(sorted(self.__list_of_reminders.get(user_id))[index])
         reminder = self.__list_of_reminders.get(user_id).get(reminder_time)
-        *_, message_text, message_command, message_time, _, _ = get_reminder_message_format(reminder)
-        message_to_send = f"```\n{index} : {message_time}:\n{message_command}\n{message_text}\n```"
+        *_, message_text, message_command, message_time, _, _, raw_message = get_reminder_message_format(reminder)
+        message_to_send = f"\n{index} : {message_time}:\n{message_command}\n{message_text}"
         try:
-            # Get confirmation. Sleep so that own message doesn't count as reply
-            embed = discord.Embed(title="Confirm deletion of (y/n)",
-                                  description=message_to_send)
-            await message.channel.send(content=f"<@{user_id}>", embed=embed)
+            # Get confirmation
+            await HelperBotFunctions.send_embed_messages([message_to_send], message.channel, "Confirm deletion of (y/n)"
+                                                         , content=f"<@{user_id}>", make_code_format=True)
 
             def check(m):
                 return m.author == message.author
@@ -132,9 +141,8 @@ class Reminder:
         if str(confirmation.content).lower().startswith("y"):
             self.__list_of_reminders.get(user_id).pop(reminder_time)
             self.write_reminders_to_disk(user_id)
-            embed = discord.Embed(title="Deleted",
-                                  description=message_to_send)
-            await message.channel.send(content=f"<@{user_id}>", embed=embed)
+            await HelperBotFunctions.send_embed_messages([message_to_send], message.channel, "Deleted"
+                                                         , content=f"<@{user_id}>", make_code_format=True)
 
     async def list_reminders(self, ctx):
         message = ctx.message
@@ -146,9 +154,9 @@ class Reminder:
         for index, reminder_time in enumerate(sorted(self.__list_of_reminders.get(str(author_id)))):
             reminder = self.__list_of_reminders.get(str(author_id)).get(reminder_time)
             time_to_remind, user_to_mention, server_id, channel_id, message_text, message_command, \
-            message_time, user_id, message_id = get_reminder_message_format(reminder)
+            message_time, user_id, message_id, raw_message = get_reminder_message_format(reminder)
             link = HelperBotFunctions.craft_message_link(server_id, channel_id, message_id)
-            current_message = f"\n{index} : {message_time} -> {time_to_remind}\n({link})\n{message_command}" \
+            current_message = f"\n{index} : {message_time} -> {time_to_remind}\n{link}\n{message_command}" \
                               f"\n{message_text}\n"
             messages_to_send.append(current_message)
         list_of_valid_messages = HelperBotFunctions.craft_correct_length_messages(messages_to_send, embed_message=True,
@@ -198,8 +206,8 @@ class Reminder:
         channel_id = message.channel.id
         message_id = message.id
         now = datetime.now().timestamp()
-        now_readable_time = datetime.fromtimestamp(now).replace(microsecond=0)
-        reminder_readable_time = datetime.fromtimestamp(timestamp).replace(microsecond=0)
+        now_readable_time = datetime.fromtimestamp(now).replace(microsecond=0).strftime(DATE_FORMAT)
+        reminder_readable_time = datetime.fromtimestamp(timestamp).replace(microsecond=0).strftime(DATE_FORMAT)
         self.__list_of_reminders.get(user_id)[timestamp_str] = {"reminder_timestamp": str(timestamp),
                                                                 "reminder_readable": str(reminder_readable_time),
                                                                 "now_timestamp": str(now),
@@ -232,12 +240,12 @@ class Reminder:
                 if now >= first_reminder:
                     reminder = self.__list_of_reminders.get(user_id).get(str(first_reminder))
                     time_to_remind, user_to_mention, server_id, channel_id, message_text, message_command, \
-                    message_time, user_id, message_id = get_reminder_message_format(reminder)
-                    title = f"{time_to_remind} " \
-                            f"({HelperBotFunctions.craft_message_link(server_id, channel_id,message_id)})"
-                    embed = discord.Embed(title=title, description=(message_command + "\n" + message_text))
-                    await self.__bot.get_guild(server_id).get_channel(channel_id).send(content=user_to_mention,
-                                                                                       embed=embed)
+                    message_time, user_id, message_id, raw_message = get_reminder_message_format(reminder)
+                    link = HelperBotFunctions.craft_message_link(server_id, channel_id, message_id)
+                    title = f"{time_to_remind} {link}"
+                    channel = self.__bot.get_guild(server_id).get_channel(channel_id)
+                    await HelperBotFunctions.send_embed_messages([(message_command + "\n" + message_text)], channel,
+                                                                 title, user_to_mention)
                     self.__list_of_reminders.get(str(user_id)).pop(str(first_reminder))
                     self.write_reminders_to_disk(str(user_id))
             await asyncio.sleep(10)
