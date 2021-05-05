@@ -150,7 +150,8 @@ async def date(ctx, reminder_date: str, reminder_time: str, message_text: str = 
 @remindme.command(name="time",  aliases=["in"], pass_context=True, description="Reminds in a given amount amount of "
                                                                                "[Time Measures]")
 async def delta_time(ctx, time_amount: int, time_measure: str, message_text: str = "", *args):
-    await reminder.delta_time(ctx, time_amount, time_measure, message_text, *args)
+    message_command = " ".join([COMMAND_PREFIX + str(ctx.command), str(time_amount), time_measure])
+    await reminder.delta_time(ctx.message, message_command, True, time_amount, time_measure, message_text, *args)
 
 
 @remindme.command(name="timemeasures", pass_context=True, description="List of valid time measures")
@@ -163,10 +164,17 @@ async def time_measures(ctx):
     await HelperBotFunctions.send_messages([message], ctx.message.channel, make_code_format=True)
 
 
-@remindme.command(name="add_interval", aliases=["interval"], pass_context=True,
+@remindme.command(name="add_interval", aliases=["interval", "every"], pass_context=True,
                   description="Adds an interval of every x [Time Measure] to a reminder")
 async def add_interval(ctx, index: int, interval: int, time_measure: str):
-    await reminder.interval(ctx, index, interval, time_measure)
+    this_reminder = await reminder.get_reminder(ctx.message, index)
+    await reminder.add_interval(ctx.message, this_reminder, interval, time_measure)
+
+
+@remindme.command(name="remove_interval", pass_context=True, description="Removes an interval from a reminder")
+async def remove_interval(ctx, index: int):
+    this_reminder = await reminder.get_reminder(ctx.message, index)
+    await reminder.remove_interval(ctx.message, this_reminder)
 
 
 @bot.command(name="noclean", aliases=["nc"], description="Don't clean youtube link")
@@ -209,8 +217,8 @@ async def game(ctx, *game_name):
 async def random_messages(ctx, how_many: int):
     channel = ctx.message.channel
     # Too many messages
-    if how_many > MAX_RANDOM_MESSAGES:
-        return await channel.send(f"That's too many (max {MAX_RANDOM_MESSAGES})!")
+    if how_many > MAXIMUM_RANDOM_MESSAGES:
+        return await channel.send(f"That's too many (max {MAXIMUM_RANDOM_MESSAGES})!")
     channel_created = channel.created_at.timestamp()
     latest = channel.last_message.created_at.timestamp()
     # Get a random time between the channel creation and latest message

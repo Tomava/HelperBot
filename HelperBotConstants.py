@@ -8,7 +8,9 @@ EMBED_MESSAGE_MAX_CHARACTERS = 2048
 MESSAGE_MAX_CHARACTERS = 2000
 MAXIMUM_REMINDERS = 200
 MAXIMUM_REMOVED_MESSAGES = 5000
-MAX_RANDOM_MESSAGES = 20
+MAXIMUM_RANDOM_MESSAGES = 20
+# One hour
+MINIMUM_INTERVAL_SECONDS = 60 * 60
 EPOCH_DATETIME = datetime(1970, 1, 1)
 SECONDS_PER_DAY = 24 * 60 * 60
 DATE_FORMAT = "%a %Y-%m-%d %H:%M:%S"
@@ -39,19 +41,19 @@ LIST_OF_TIME_MEASURES = {"seconds": ["sec", "secs", "second", "seconds"],
                          "years": ["year", "years"]
                          }
 REMINDER_HELP = (f"Correct formats are: (using !remindme / !reminder)\n"
-                 f"{COMMAND_PREFIX}remindme in x [Time Measure]\n"
-                 f"{COMMAND_PREFIX}remindme time x [Time Measure]\n"
-                 f"{COMMAND_PREFIX}remindme on dd.mm.yyyy hh.mm[.ss]\n"
-                 f"{COMMAND_PREFIX}remindme at dd.mm.yyyy hh.mm[.ss]\n"
-                 f"{COMMAND_PREFIX}remindme date dd.mm.yyyy hh.mm[.ss]\n"
-                 f"{COMMAND_PREFIX}remindme tomorrow/today hh.mm[.ss]\n"
-                 f"{COMMAND_PREFIX}remindme list\n"
-                 f"{COMMAND_PREFIX}remindme remove/delete x\n"
-                 f"{COMMAND_PREFIX}remindme help\n\n"
+                 f"{COMMAND_PREFIX}remindme [in/time] [x] [Time Measure]\n"
+                 f"{COMMAND_PREFIX}remindme [on/at/date] [dd.mm.yyyy hh.mm.ss]\n"
+                 f"{COMMAND_PREFIX}remindme [tomorrow/today] [hh.mm.ss]\n"
+                 f"{COMMAND_PREFIX}remindme [list]\n"
+                 f"{COMMAND_PREFIX}remindme [remove/delete] [index]\n"
+                 f"{COMMAND_PREFIX}remindme [interval/add_interval/every] [index] [x] [Time Measure]\n"
+                 f"{COMMAND_PREFIX}remindme [remove_interval] [index]\n"
+                 f"{COMMAND_PREFIX}remindme [help]\n\n"
                  f"To get a list of time measures, try\n"
-                 f"{COMMAND_PREFIX}remindme timemeasures")
-ADMIN_HELP = (f"{COMMAND_PREFIX}archive [true]: Creates an archive of this server, if argument \"true\" is given downloads all attachment files\n"
-              f"{COMMAND_PREFIX}admin help\n")
+                 f"{COMMAND_PREFIX}remindme [timemeasures]")
+ADMIN_HELP = (
+    f"{COMMAND_PREFIX}archive [true]: Creates an archive of this server, if argument \"true\" is given downloads all attachment files\n"
+    f"{COMMAND_PREFIX}admin help\n")
 REMOVE_FROM_LINK = ["list", "index"]
 
 # Path to home folder
