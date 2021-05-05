@@ -58,3 +58,4 @@ REMOVE_FROM_LINK = ["list", "index"]
 HOME = str(Path.home())
 PATH_TO_DISCORD = HOME + os.sep + "Discord"
 PATH_TO_REMINDERS = HOME + os.sep + "Discord" + os.sep + "reminders"
+PATH_TO_TOKEN = PATH_TO_DISCORD + os.sep + "HelperBoyToken.env"

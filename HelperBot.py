@@ -10,7 +10,7 @@ from image_downloader import download_image
 
 from HelperBotConstants import *
 import HelperBotFunctions
-import HelperBotReminder
+import HelperBotReminderOrganizer
 from HelperBotCustomizations import *
 
 logging.basicConfig(level=logging.INFO)
@@ -19,13 +19,12 @@ description = ""
 intents = discord.Intents.default()
 intents.members = True
 bot = commands.Bot(command_prefix=COMMAND_PREFIX, description=description, intents=intents)
-load_dotenv(PATH_TO_DISCORD + os.sep + "HelperBoyToken.env")
+load_dotenv(PATH_TO_TOKEN)
 token = os.getenv('DISCORD_TOKEN')
-reminder = HelperBotReminder.Reminder(bot)
+reminder = HelperBotReminderOrganizer.ReminderOrganizer(bot)
 
 
 # TODO: Use scheduler on reminders
-# TODO: Add weekday to reminders
 
 
 @bot.event
@@ -44,7 +43,8 @@ async def on_command_error(ctx, error):
     if hasattr(ctx.command, 'on_error'):
         print("Error:", error)
     elif isinstance(error, commands.errors.UserInputError):
-        await ctx.channel.send("Looks like your message wasn't formatted correctly.\nType !reminder_help to get correct formats")
+        await ctx.channel.send("Looks like your message wasn't formatted correctly.\n"
+                               "Type !reminder help to get correct formats")
     else:
         print("Error:", error)
         raise error
@@ -79,8 +79,8 @@ async def on_message(message):
         await message.channel.send(new_message_content)
     # Respond to a tag
     if bot.user.mentioned_in(message):
-        response = random.randint(0, (len(LIST_OF_RESPONSES_TO_TAGS) - 1))
-        await message.channel.send(f"{message.author.mention}\n{LIST_OF_RESPONSES_TO_TAGS[response]}")
+        await HelperBotFunctions.send_messages([f"{message.author.mention}\n",
+                                                random.choice(LIST_OF_RESPONSES_TO_TAGS)], message.channel)
 
 
 @bot.command(aliases=["remove"], description="Deletes given amount of messages")
@@ -101,7 +101,7 @@ async def delete(ctx, how_many: int):
         await HelperBotFunctions.send_messages(["Confirm deletion of ", how_many, " messages (y/n)"], message.channel)
 
         def check(m):
-            return m.author == message.author and str(m.content).lower().startswith("y")
+            return m.author == message.author and (str(m.content).lower() == "y" or str(m.content).lower() == "yes")
 
         await bot.wait_for('message', check=check, timeout=10.0)
         # Add 2 to account for confirmation message and 1 to account for initial message
@@ -147,7 +147,8 @@ async def date(ctx, reminder_date: str, reminder_time: str, message_text: str = 
     await reminder.date(ctx, reminder_date, reminder_time, message_text, *args)
 
 
-@remindme.command(name="time",  aliases=["in"], pass_context=True, description="Reminds in a given amount amount of [Time Measures]")
+@remindme.command(name="time",  aliases=["in"], pass_context=True, description="Reminds in a given amount amount of "
+                                                                               "[Time Measures]")
 async def delta_time(ctx, time_amount: int, time_measure: str, message_text: str = "", *args):
     await reminder.delta_time(ctx, time_amount, time_measure, message_text, *args)
 
@@ -162,6 +163,12 @@ async def time_measures(ctx):
     await HelperBotFunctions.send_messages([message], ctx.message.channel, make_code_format=True)
 
 
+@remindme.command(name="add_interval", aliases=["interval"], pass_context=True,
+                  description="Adds an interval of every x [Time Measure] to a reminder")
+async def add_interval(ctx, index: int, interval: int, time_measure: str):
+    await reminder.interval(ctx, index, interval, time_measure)
+
+
 @bot.command(name="noclean", aliases=["nc"], description="Don't clean youtube link")
 async def noclean(ctx):
     return False
@@ -169,8 +176,7 @@ async def noclean(ctx):
 
 @bot.command(name="answer", description="I will try to answer you question")
 async def answer(ctx):
-    index = random.randint(0, (len(LIST_OF_RESPONSES_TO_QUESTIONS) - 1))
-    await ctx.channel.send(LIST_OF_RESPONSES_TO_QUESTIONS[index])
+    await HelperBotFunctions.send_messages([random.choice(LIST_OF_RESPONSES_TO_QUESTIONS)], ctx.message.channel)
 
 
 @bot.command(name="history", description="Learn about my history")
