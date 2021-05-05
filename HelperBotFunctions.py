@@ -1,14 +1,23 @@
 import re
-import asyncio
 from urllib.parse import urlsplit, urlunsplit
 from dateutil.relativedelta import relativedelta
 from HelperBotConstants import *
 from HelperBotCustomizations import *
+import discord
+import time
 
 
 def make_dirs():
     if not os.path.exists(PATH_TO_REMINDERS):
         os.makedirs(PATH_TO_REMINDERS)
+
+
+def utc_to_local_datetime(utc_datetime):
+    delta = utc_datetime - EPOCH_DATETIME
+    utc_epoch = SECONDS_PER_DAY * delta.days + delta.seconds
+    time_struct = time.localtime(utc_epoch)
+    dt_args = time_struct[:6] + (delta.microseconds,)
+    return datetime(*dt_args)
 
 
 def craft_message_link(server_id, channel_id, message_id):
@@ -60,15 +69,37 @@ def craft_correct_length_messages(list_of_message_pieces, embed_message=False, m
     return list_of_new_pieces
 
 
-async def send_messages(list_of_messages, channel):
+async def send_messages(list_of_messages, channel, make_code_format=False):
     """
     Sends all messages in a list to a given channel
     :param list_of_messages: list
     :param channel: channel
+    :param make_code_format: bool, If true will add ``` characters in the end and start of the message
     :return: nothing
     """
+    list_of_messages = craft_correct_length_messages(list_of_messages, make_code_format=make_code_format)
     for message in list_of_messages:
         await channel.send(message)
+
+
+async def send_embed_messages(list_of_messages, channel, title, content="",
+                              colour=discord.Colour.from_rgb(255, 255, 255), make_code_format=False):
+    """
+    Sends all messages in a list to a given channel as embed messages
+    :param list_of_messages: list
+    :param channel: channel
+    :param title: str, Title of the embed message
+    :param content: str, Content of the actual message
+    :param colour: discord.Colour, Colour of the embed, Black by default
+    :param make_code_format: bool, If true will add ``` characters in the end and start of the message
+    :return: nothing
+    """
+    list_of_messages = craft_correct_length_messages(list_of_messages, embed_message=True,
+                                                     make_code_format=make_code_format)
+    for message in list_of_messages:
+        embed = discord.Embed(title=title,
+                              description=message, colour=colour)
+        await channel.send(content=content, embed=embed)
 
 
 def clean_youtube_links(message_content):

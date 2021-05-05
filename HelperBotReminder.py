@@ -108,8 +108,7 @@ class Reminder:
 
     async def help(self, ctx):
         message = ctx.message
-        help_messages = HelperBotFunctions.craft_correct_length_messages([REMINDER_HELP], make_code_format=True)
-        await HelperBotFunctions.send_messages(help_messages, message.channel)
+        await HelperBotFunctions.send_messages([REMINDER_HELP], message.channel, make_code_format=True)
 
     async def delete(self, ctx, index: int):
         message = ctx.message

@@ -102,8 +102,7 @@ async def delete(ctx, how_many: int):
         return
     try:
         # Get confirmation
-        messages = HelperBotFunctions.craft_correct_length_messages(["Confirm deletion of ", how_many, " messages (y/n)"])
-        await HelperBotFunctions.send_messages(messages, message.channel)
+        await HelperBotFunctions.send_messages(["Confirm deletion of ", how_many, " messages (y/n)"], message.channel)
 
         def check(m):
             return m.author == message.author and str(m.content).lower().startswith("y")
@@ -164,8 +163,7 @@ async def time_measures(ctx):
     for key in LIST_OF_TIME_MEASURES:
         message += f"{key + ':':<{max_width}}\t {', '.join(LIST_OF_TIME_MEASURES.get(key))}\n"
     message += f"\n{'date:':<{max_width}}\t today, tommorrow"
-    list_of_messages = HelperBotFunctions.craft_correct_length_messages([message], make_code_format=True)
-    await HelperBotFunctions.send_messages(list_of_messages, ctx.message.channel)
+    await HelperBotFunctions.send_messages([message], ctx.message.channel, make_code_format=True)
 
 
 @bot.command(name="noclean", aliases=["nc"], description="Don't clean youtube link")
@@ -202,7 +200,48 @@ async def game(ctx, *game_name):
         message_to_send = f"@everyone\n{message_sender} wants to game with you"
     else:
         message_to_send = f"@everyone\n{message_sender} wants to play {' '.join(game_name)} with you"
-    messages = HelperBotFunctions.craft_correct_length_messages([message_to_send])
-    await HelperBotFunctions.send_messages(messages, message.channel)
+    await HelperBotFunctions.send_messages([message_to_send], message.channel)
+
+
+@bot.command(name="random", description="Get x amount of random messages from current channel's history")
+async def random_messages(ctx, how_many: int):
+    channel = ctx.message.channel
+    # Too many messages
+    if how_many > MAX_RANDOM_MESSAGES:
+        return await channel.send(f"That's too many (max {MAX_RANDOM_MESSAGES})!")
+    channel_created = channel.created_at.timestamp()
+    latest = channel.last_message.created_at.timestamp()
+    # Get a random time between the channel creation and latest message
+    # (Much quicker than fetching all messages)
+    time_to_fetch = random.uniform(channel_created, latest)
+    time_to_fetch = datetime.fromtimestamp(time_to_fetch)
+    messages_after = await channel.history(after=time_to_fetch, limit=2 * how_many,
+                                           oldest_first=True).flatten()
+    messages_before = await channel.history(before=time_to_fetch, limit=2 * how_many,
+                                            oldest_first=True).flatten()
+    # Add messages to a list
+    all_messages = []
+    all_messages.extend(messages_before)
+    all_messages.extend(messages_after)
+    # If there are less than how_many messages in the channel
+    if len(all_messages) <= how_many:
+        starting_index = 0
+    else:
+        # Randomize a starting index (must have how_many amount of messages after it)
+        starting_index = random.randint(0, len(all_messages) - how_many - 1)
+    list_of_messages = []
+    for message in all_messages[starting_index:starting_index + how_many]:
+        author = message.author.name
+        created_readable = HelperBotFunctions.utc_to_local_datetime(datetime.fromisoformat(str(message.created_at)))\
+            .replace(microsecond=0)
+        content = message.content
+        message_to_send = f"**{author} at {created_readable}:**\n{content}\n"
+        list_of_messages.append(message_to_send)
+    # Get a random colour
+    random_colour = discord.Colour.from_rgb(r=random.randint(0, 255), g=random.randint(0, 255),
+                                            b=random.randint(0, 255))
+    message_link = HelperBotFunctions.craft_message_link(ctx.message.guild.id, channel.id, ctx.message.id)
+    await HelperBotFunctions.send_embed_messages(list_of_messages, channel, "Random convo", message_link, random_colour)
+
 
 bot.run(token)
