@@ -169,4 +169,3 @@ def craft_too_many_warning_message(max_amount):
     :return: str, Message template
     """
     return f"That's too many (max {max_amount})!"
-

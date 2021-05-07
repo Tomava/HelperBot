@@ -46,7 +46,7 @@ async def on_command_error(ctx, error):
     # Wrong format
     elif isinstance(error, commands.errors.UserInputError):
         await HelperBotFunctions.send_messages(["Looks like your message wasn't formatted correctly.\n"
-                               f"Type {COMMAND_PREFIX}help to get correct formats."], ctx.channel)
+                                                f"Type {COMMAND_PREFIX}help to get correct formats."], ctx.channel)
     # Command not found
     elif isinstance(error, commands.errors.CommandNotFound):
         await HelperBotFunctions.send_messages([f"That's not a valid command.\nType "
@@ -116,8 +116,8 @@ async def delete(ctx, how_many: int):
         return
     # Make sure there's not too many
     if how_many > MAXIMUM_REMOVED_MESSAGES:
-        await HelperBotFunctions.send_messages([HelperBotFunctions.craft_too_many_warning_message(MAXIMUM_REMOVED_MESSAGES)],
-                                               message.channel)
+        await HelperBotFunctions.send_messages(
+            [HelperBotFunctions.craft_too_many_warning_message(MAXIMUM_REMOVED_MESSAGES)], message.channel)
         return
     try:
         # Get confirmation
@@ -164,8 +164,8 @@ async def date(ctx, reminder_date: str, reminder_time: str, message_text: str = 
     await reminder.date(ctx, reminder_date, reminder_time, message_text, *args)
 
 
-@remindme.command(name="time",  aliases=["in"], pass_context=True, description="Reminds in a given amount amount of "
-                                                                               "[Time Measures]")
+@remindme.command(name="time", aliases=["in"], pass_context=True, description="Reminds in a given amount amount of "
+                                                                              "[Time Measures]")
 async def delta_time(ctx, time_amount: int, time_measure: str, message_text: str = "", *args):
     message_command = " ".join([COMMAND_PREFIX + str(ctx.command), str(time_amount), time_measure])
     await reminder.delta_time(ctx.message, message_command, True, time_amount, time_measure, message_text, *args)
@@ -195,7 +195,7 @@ async def remove_interval(ctx, index: int):
 
 
 @bot.command(name="noclean", aliases=["nc"], description="Don't clean youtube link")
-async def noclean(ctx):
+async def noclean():
     return False
 
 
@@ -235,8 +235,8 @@ async def random_messages(ctx, how_many: int):
     channel = ctx.message.channel
     # Too many messages
     if how_many > MAXIMUM_RANDOM_MESSAGES:
-        return await HelperBotFunctions.send_messages([HelperBotFunctions.craft_too_many_warning_message(MAXIMUM_RANDOM_MESSAGES)]
-                                                      , channel)
+        return await HelperBotFunctions.send_messages(
+            [HelperBotFunctions.craft_too_many_warning_message(MAXIMUM_RANDOM_MESSAGES)], channel)
     channel_created = channel.created_at.timestamp()
     latest = channel.last_message.created_at.timestamp()
     # Get a random time between the channel creation and latest message
@@ -260,7 +260,7 @@ async def random_messages(ctx, how_many: int):
     list_of_messages = []
     for message in all_messages[starting_index:starting_index + how_many]:
         author = message.author.name
-        created_readable = HelperBotFunctions.utc_to_local_datetime(datetime.fromisoformat(str(message.created_at)))\
+        created_readable = HelperBotFunctions.utc_to_local_datetime(datetime.fromisoformat(str(message.created_at))) \
             .replace(microsecond=0)
         content = message.content
         message_to_send = f"**{author} at {created_readable}:**\n{content}\n"
@@ -281,10 +281,16 @@ async def admin_help(ctx):
                                                             "Use !count stop to stop counting")
 async def count(ctx, how_many: int):
     if how_many > MAXIMUM_COUNT:
-        return await HelperBotFunctions.send_messages([HelperBotFunctions.craft_too_many_warning_message(MAXIMUM_COUNT)],
-                                                      ctx.message.channel)
-    for i in range(1 , how_many + 1):
+        return await HelperBotFunctions.send_messages(
+            [HelperBotFunctions.craft_too_many_warning_message(MAXIMUM_COUNT)], ctx.message.channel)
+    for i in range(1, how_many + 1):
         await HelperBotFunctions.send_messages([f"{i}"], ctx.message.channel)
         await asyncio.sleep(1)
+
+
+# TODO: This
+# @admin.command(name="archive", pass_context=True, description="Create an archive of this server, if argument \"true\" "
+#                                                               "is given downloads all attachment files")
+# async def archive(ctx, download_attachments: bool):
 
 bot.run(token)

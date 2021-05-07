@@ -101,6 +101,24 @@ def get_reminders():
     return list_of_reminders
 
 
+def get_reminder_text(reminder, index):
+    """
+    Gets reminder as text
+    :param reminder: dict, Reminder
+    :param index: int, Index of the reminder
+    :return: str, Reminder as text
+    """
+    if reminder is None:
+        return ""
+    user_to_mention, (time_to_remind, time_to_remind_timestmap, message_time, message_timestamp), \
+    (user_id, server_id, channel_id, message_id), (message_text, message_command, raw_message), \
+    (interval_amount, interval_measure) = get_reminder_message_format(reminder)
+    link = HelperBotFunctions.craft_message_link(server_id, channel_id, message_id)
+    current_message = f"{index} : {message_time} -> {time_to_remind} (Interval: {interval_amount} " \
+                      f"{interval_measure})\n{link}\n{message_command}\n{message_text}\n"
+    return current_message
+
+
 class ReminderOrganizer:
 
     def __init__(self, bot):
@@ -139,23 +157,6 @@ class ReminderOrganizer:
             return None
         return self.__list_of_reminders.get(user_id).get(reminder_time)
 
-    def get_reminder_text(self, reminder, index):
-        """
-        Gets reminder as text
-        :param reminder: dict, Reminder
-        :param index: int, Index of the reminder
-        :return: str, Reminder as text
-        """
-        if reminder is None:
-            return ""
-        user_to_mention, (time_to_remind, time_to_remind_timestmap, message_time, message_timestamp), \
-        (user_id, server_id, channel_id, message_id), (message_text, message_command, raw_message), \
-        (interval_amount, interval_measure) = get_reminder_message_format(reminder)
-        link = HelperBotFunctions.craft_message_link(server_id, channel_id, message_id)
-        current_message = f"{index} : {message_time} -> {time_to_remind} (Interval: {interval_amount} " \
-                          f"{interval_measure})\n{link}\n{message_command}\n{message_text}\n"
-        return current_message
-
     def write_reminders_to_disk(self, user_id):
         """
         Writes a given users reminders to disk
@@ -163,7 +164,8 @@ class ReminderOrganizer:
         :return: nothing
         """
         with open(PATH_TO_REMINDERS + os.sep + f"{user_id}.json", "w", encoding='utf-8') as reminder_file:
-            json.dump(dict(sorted(self.__list_of_reminders.get(user_id).items())), reminder_file, indent=2, ensure_ascii=False)
+            json.dump(dict(sorted(self.__list_of_reminders.get(user_id).items())), reminder_file,
+                      indent=2, ensure_ascii=False)
 
     async def reminder_help(self, ctx, incorrect_format=""):
         message = ctx.message
@@ -177,11 +179,11 @@ class ReminderOrganizer:
         reminder_time = str(reminder.get("reminder_timestamp"))
         if reminder is None:
             return
-        message_to_send = self.get_reminder_text(reminder, index)
+        message_to_send = get_reminder_text(reminder, index)
         try:
             # Get confirmation
-            await HelperBotFunctions.send_embed_messages([message_to_send], message.channel, "Confirm deletion of (y/n)"
-                                                         , content=f"<@{user_id}>")
+            await HelperBotFunctions.send_embed_messages(
+                [message_to_send], message.channel, "Confirm deletion of (y/n)", content=f"<@{user_id}>")
 
             def check(m):
                 return m.author == message.author
@@ -204,7 +206,7 @@ class ReminderOrganizer:
             return
         for index, reminder_time in enumerate(sorted(self.__list_of_reminders.get(str(author_id)))):
             reminder = await self.get_reminder(message, index)
-            current_message = self.get_reminder_text(reminder, index) + "\n"
+            current_message = get_reminder_text(reminder, index) + "\n"
             messages_to_send.append(current_message)
         title = "List of reminders"
         content = f"<@{author_id}>"
@@ -254,7 +256,7 @@ class ReminderOrganizer:
         if announce:
             _, (_, timestamp, _, _), *_ = get_reminder_message_format(reminder)
             index = sorted(self.__list_of_reminders.get(user_id)).index(str(timestamp))
-            messages_to_send = [self.get_reminder_text(reminder, index)]
+            messages_to_send = [get_reminder_text(reminder, index)]
             title = "Interval added"
             content = f"<@{user_id}>"
             await HelperBotFunctions.send_embed_messages(messages_to_send, message.channel, title, content)
@@ -272,7 +274,7 @@ class ReminderOrganizer:
         reminder["interval_amount"] = None
         reminder["interval_measure"] = None
         self.write_reminders_to_disk(user_id)
-        messages_to_send = [self.get_reminder_text(reminder, index)]
+        messages_to_send = [get_reminder_text(reminder, index)]
         title = "Interval removed"
         content = f"<@{user_id}>"
         await HelperBotFunctions.send_embed_messages(messages_to_send, message.channel, title, content)
@@ -319,7 +321,7 @@ class ReminderOrganizer:
         reminder = self.__list_of_reminders.get(user_id).get(timestamp_str)
         if announce:
             index = sorted(self.__list_of_reminders.get(user_id)).index(timestamp_str)
-            messages_to_send = [self.get_reminder_text(reminder, index)]
+            messages_to_send = [get_reminder_text(reminder, index)]
             title = "Reminder added"
             content = f"<@{user_id}>"
             await HelperBotFunctions.send_embed_messages(messages_to_send, message.channel, title, content)
@@ -348,7 +350,7 @@ class ReminderOrganizer:
                     (interval_amount, interval_measure) = get_reminder_message_format(reminder)
                     title = "Reminder"
                     channel = self.__bot.get_guild(server_id).get_channel(channel_id)
-                    message_to_send = self.get_reminder_text(reminder, 0)
+                    message_to_send = get_reminder_text(reminder, 0)
                     await HelperBotFunctions.send_embed_messages([message_to_send], channel,
                                                                  title, user_to_mention)
                     self.__list_of_reminders.get(str(user_id)).pop(str(first_reminder))
