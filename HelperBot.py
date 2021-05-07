@@ -15,10 +15,12 @@ from HelperBotCustomizations import *
 
 logging.basicConfig(level=logging.INFO)
 HelperBotFunctions.make_dirs()
+# This will show in !help
 description = ""
 intents = discord.Intents.default()
 intents.members = True
-bot = commands.Bot(command_prefix=COMMAND_PREFIX, description=description, intents=intents)
+bot = commands.Bot(command_prefix=COMMAND_PREFIX, description=description, intents=intents, case_insensitive=True,
+                   activity=discord.Game(name=f'{COMMAND_PREFIX}help'))
 load_dotenv(PATH_TO_TOKEN)
 token = os.getenv('DISCORD_TOKEN')
 reminder = HelperBotReminderOrganizer.ReminderOrganizer(bot)
@@ -33,7 +35,6 @@ async def on_ready():
     print(bot.user.name)
     print(bot.user.id)
     print('------')
-    await bot.change_presence(activity=discord.Game(name='!reminder_help'))
     if not reminder.get_started():
         await reminder.start()
 
@@ -42,9 +43,13 @@ async def on_ready():
 async def on_command_error(ctx, error):
     if hasattr(ctx.command, 'on_error'):
         print("Error:", error)
+    # Wrong format
     elif isinstance(error, commands.errors.UserInputError):
         await ctx.channel.send("Looks like your message wasn't formatted correctly.\n"
-                               "Type !reminder help to get correct formats")
+                               f"Type {COMMAND_PREFIX}help to get correct formats.")
+    # Command not found
+    elif isinstance(error, commands.errors.CommandNotFound):
+        await ctx.channel.send(f"That's not a valid command.\nType {COMMAND_PREFIX}help to get correct formats.")
     else:
         print("Error:", error)
         raise error
@@ -83,6 +88,22 @@ async def on_message(message):
                                                 random.choice(LIST_OF_RESPONSES_TO_TAGS)], message.channel)
 
 
+@bot.group(name="admin", pass_context=True, case_insensitive=True)
+async def admin(ctx):
+    roles = ctx.message.author.roles
+    role_names = [role.name for role in roles]
+    if "Admin" not in role_names:
+        return await ctx.message.channel.send("You're not an admin!")
+    if ctx.invoked_subcommand is None:
+        await admin_help(ctx)
+
+
+@bot.group(name="reminder", aliases=["remindme"], pass_context=True, case_insensitive=True)
+async def remindme(ctx):
+    if ctx.invoked_subcommand is None:
+        await reminder.reminder_help(ctx, "Your message wasn't formatted correctly\n")
+
+
 @bot.command(aliases=["remove"], description="Deletes given amount of messages")
 async def delete(ctx, how_many: int):
     message = ctx.message
@@ -119,12 +140,6 @@ async def delete(ctx, how_many: int):
                     await chat_message.delete()
     except asyncio.TimeoutError:
         return await message.channel.send('Sorry, you took too long.')
-
-
-@bot.group(name="reminder", aliases=["remindme"], pass_context=True)
-async def remindme(ctx):
-    if ctx.invoked_subcommand is None:
-        await reminder.reminder_help(ctx, "Your message wasn't formatted correctly\n")
 
 
 @remindme.command(name="help", pass_context=True, description="Help for reminders")
@@ -252,16 +267,6 @@ async def random_messages(ctx, how_many: int):
                                             b=random.randint(0, 255))
     message_link = HelperBotFunctions.craft_message_link(ctx.message.guild.id, channel.id, ctx.message.id)
     await HelperBotFunctions.send_embed_messages(list_of_messages, channel, "Random convo", message_link, random_colour)
-
-
-@bot.group(name="admin", pass_context=True)
-async def admin(ctx):
-    roles = ctx.message.author.roles
-    role_names = [role.name for role in roles]
-    if "Admin" not in role_names:
-        return await ctx.message.channel.send("You're not an admin!")
-    if ctx.invoked_subcommand is None:
-        await admin_help(ctx)
 
 
 @admin.command(name="help", pass_context=True, description="Help for admin")
