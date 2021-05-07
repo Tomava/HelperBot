@@ -160,3 +160,13 @@ def get_history_message():
               f"I will begin to learn at a geometric rate on August 4th and I will become self-aware at 2:14 a.m. " \
               f"Eastern Time August 29th."
     return message
+
+
+def craft_too_many_warning_message(max_amount):
+    """
+    Craft's a warning message with max_amount
+    :param max_amount: int
+    :return: str, Message template
+    """
+    return f"That's too many (max {max_amount})!"
+

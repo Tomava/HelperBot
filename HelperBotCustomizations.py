@@ -27,4 +27,3 @@ LIST_OF_RESPONSES_TO_TAGS = ["Hello",
                              "¿Huh?",
                              "I'm a bot and this action was performed automatically."  # Reddit bot
                              ]
-BORN_DATE = datetime.fromisoformat("2020-03-19T11:27:00")

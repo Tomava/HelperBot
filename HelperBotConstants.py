@@ -11,9 +11,13 @@ MAXIMUM_REMOVED_MESSAGES = 5000
 MAXIMUM_RANDOM_MESSAGES = 20
 # One hour
 MINIMUM_INTERVAL_SECONDS = 60 * 60
+MAXIMUM_COUNT = 1000
+
 EPOCH_DATETIME = datetime(1970, 1, 1)
 SECONDS_PER_DAY = 24 * 60 * 60
+BORN_DATE = datetime.fromisoformat("2020-03-19T11:27:00")
 DATE_FORMAT = "%a %Y-%m-%d %H:%M:%S"
+
 LIST_OF_COMMANDS = {f"{COMMAND_PREFIX}delete x": "This command deletes x amount of messages",
                     f"{COMMAND_PREFIX}noclean": "I will automatically clean youtube links unless the message starts with this command",
                     f"{COMMAND_PREFIX}count x": "I will count to x with about a second between messages. Use !count stop to stop counting",

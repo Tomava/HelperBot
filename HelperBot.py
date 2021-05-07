@@ -45,11 +45,12 @@ async def on_command_error(ctx, error):
         print("Error:", error)
     # Wrong format
     elif isinstance(error, commands.errors.UserInputError):
-        await ctx.channel.send("Looks like your message wasn't formatted correctly.\n"
-                               f"Type {COMMAND_PREFIX}help to get correct formats.")
+        await HelperBotFunctions.send_messages(["Looks like your message wasn't formatted correctly.\n"
+                               f"Type {COMMAND_PREFIX}help to get correct formats."], ctx.channel)
     # Command not found
     elif isinstance(error, commands.errors.CommandNotFound):
-        await ctx.channel.send(f"That's not a valid command.\nType {COMMAND_PREFIX}help to get correct formats.")
+        await HelperBotFunctions.send_messages([f"That's not a valid command.\nType "
+                                                f"{COMMAND_PREFIX}help to get correct formats."], ctx.channel)
     else:
         print("Error:", error)
         raise error
@@ -81,7 +82,7 @@ async def on_message(message):
         # Remove message
         await message.delete()
         # Send new message
-        await message.channel.send(new_message_content)
+        await HelperBotFunctions.send_messages([new_message_content], message.channel)
     # Respond to a tag
     if bot.user.mentioned_in(message):
         await HelperBotFunctions.send_messages([f"{message.author.mention}\n",
@@ -93,7 +94,7 @@ async def admin(ctx):
     roles = ctx.message.author.roles
     role_names = [role.name for role in roles]
     if "Admin" not in role_names:
-        return await ctx.message.channel.send("You're not an admin!")
+        return await HelperBotFunctions.send_messages(["You're not an admin!"], ctx.message.channel)
     if ctx.invoked_subcommand is None:
         await admin_help(ctx)
 
@@ -111,11 +112,12 @@ async def delete(ctx, how_many: int):
     if str(message.channel.type) == "private":
         private = True
     if not private and (message.channel.name == "general"):
-        await message.channel.send("Deleting messages on channel 'general' is disabled.")
+        await HelperBotFunctions.send_messages(["Deleting messages on channel 'general' is disabled."], message.channel)
         return
     # Make sure there's not too many
     if how_many > MAXIMUM_REMOVED_MESSAGES:
-        await message.channel.send(f"That's too many! {MAXIMUM_REMOVED_MESSAGES} is the limit")
+        await HelperBotFunctions.send_messages([HelperBotFunctions.craft_too_many_warning_message(MAXIMUM_REMOVED_MESSAGES)],
+                                               message.channel)
         return
     try:
         # Get confirmation
@@ -139,7 +141,7 @@ async def delete(ctx, how_many: int):
                 if chat_message.author.id == bot.user.id:
                     await chat_message.delete()
     except asyncio.TimeoutError:
-        return await message.channel.send('Sorry, you took too long.')
+        return await HelperBotFunctions.send_messages(['Sorry, you took too long.'], message.channel)
 
 
 @remindme.command(name="help", pass_context=True, description="Help for reminders")
@@ -205,13 +207,13 @@ async def answer(ctx):
 @bot.command(name="history", description="Learn about my history")
 async def history(ctx):
     message = HelperBotFunctions.get_history_message()
-    await ctx.message.channel.send(message)
+    await HelperBotFunctions.send_messages([message], ctx.message.channel)
 
 
 @bot.command(name="roll", description="Roll a roulette")
 async def roll(ctx):
     index = random.randint(0, (len(LIST_OF_ROLLS) - 1))
-    await ctx.channel.send(LIST_OF_ROLLS[index])
+    await HelperBotFunctions.send_messages([LIST_OF_ROLLS[index]], ctx.message.channel)
 
 
 @bot.command(name="game", description="Notify others to play with you")
@@ -233,7 +235,8 @@ async def random_messages(ctx, how_many: int):
     channel = ctx.message.channel
     # Too many messages
     if how_many > MAXIMUM_RANDOM_MESSAGES:
-        return await channel.send(f"That's too many (max {MAXIMUM_RANDOM_MESSAGES})!")
+        return await HelperBotFunctions.send_messages([HelperBotFunctions.craft_too_many_warning_message(MAXIMUM_RANDOM_MESSAGES)]
+                                                      , channel)
     channel_created = channel.created_at.timestamp()
     latest = channel.last_message.created_at.timestamp()
     # Get a random time between the channel creation and latest message
@@ -273,5 +276,15 @@ async def random_messages(ctx, how_many: int):
 async def admin_help(ctx):
     await HelperBotFunctions.send_messages([ADMIN_HELP], ctx.message.channel, make_code_format=True)
 
+
+@admin.command(name="count", pass_context=True, description="Count to x with about a second between messages. "
+                                                            "Use !count stop to stop counting")
+async def count(ctx, how_many: int):
+    if how_many > MAXIMUM_COUNT:
+        return await HelperBotFunctions.send_messages([HelperBotFunctions.craft_too_many_warning_message(MAXIMUM_COUNT)],
+                                                      ctx.message.channel)
+    for i in range(1 , how_many + 1):
+        await HelperBotFunctions.send_messages([f"{i}"], ctx.message.channel)
+        await asyncio.sleep(1)
 
 bot.run(token)
