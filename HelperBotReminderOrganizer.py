@@ -339,26 +339,36 @@ class ReminderOrganizer:
                 await asyncio.sleep(10)
                 continue
             for user_id in self.__list_of_reminders:
-                # If user has no reminders
-                if len(self.__list_of_reminders.get(user_id)) < 1:
-                    continue
-                first_reminder = float(sorted(self.__list_of_reminders.get(user_id))[0])
-                if now >= first_reminder:
-                    reminder = self.__list_of_reminders.get(user_id).get(str(first_reminder))
-                    user_to_mention, (time_to_remind, time_to_remind_timestmap, message_time, message_timestamp), \
-                    (user_id, server_id, channel_id, message_id), (message_text, message_command, raw_message), \
-                    (interval_amount, interval_measure) = get_reminder_message_format(reminder)
-                    title = "Reminder"
-                    channel = self.__bot.get_guild(server_id).get_channel(channel_id)
-                    message_to_send = get_reminder_text(reminder, 0)
-                    await HelperBotFunctions.send_embed_messages([message_to_send], channel,
-                                                                 title, user_to_mention)
-                    self.__list_of_reminders.get(str(user_id)).pop(str(first_reminder))
-                    self.write_reminders_to_disk(str(user_id))
-                    # Check if reminder has add_interval
-                    if reminder.get("interval_amount") is not None:
-                        message = await self.__bot.get_guild(server_id).get_channel(channel_id).fetch_message(message_id)
-                        reminder = await self.delta_time(message, message_command, False, interval_amount,
-                                                         interval_measure, message_text)
-                        await self.add_interval(message, reminder, interval_amount, interval_measure, False)
+                # Check user's reminders in a loop
+                while True:
+                    # If user has no reminders, go to next user
+                    if len(self.__list_of_reminders.get(user_id)) < 1:
+                        break
+                    first_reminder_timestamp = float(sorted(self.__list_of_reminders.get(user_id))[0])
+                    # If the reminder time has gone, remind user and delete the reminder
+                    if now >= first_reminder_timestamp:
+                        reminder = self.__list_of_reminders.get(user_id).get(str(first_reminder_timestamp))
+                        user_to_mention, _, \
+                        (_, server_id, channel_id, message_id), (message_text, message_command, raw_message), \
+                        (interval_amount, interval_measure) = get_reminder_message_format(reminder)
+                        channel = self.__bot.get_guild(server_id).get_channel(channel_id)
+                        message_to_send = get_reminder_text(reminder, 0)
+                        await HelperBotFunctions.send_embed_messages([message_to_send], channel,
+                                                                     "Reminder", user_to_mention)
+                        # Remove reminder
+                        self.__list_of_reminders.get(str(user_id)).pop(str(first_reminder_timestamp))
+                        self.write_reminders_to_disk(str(user_id))
+                        # Check if reminder has interval
+                        if reminder.get("interval_amount") is not None:
+                            # Get the channel
+                            message = await self.__bot.get_guild(server_id).get_channel(channel_id).fetch_message(message_id)
+                            # Add a reminder with interval from current time
+                            reminder = await self.delta_time(message, message_command, False, interval_amount,
+                                                             interval_measure, message_text)
+                            # Add interval to created reminder
+                            await self.add_interval(message, reminder, interval_amount, interval_measure, False)
+                    # If the first reminder's time has not passed yet, go to the next user
+                    else:
+                        break
+            # Sleep for 10 seconds after checking each user
             await asyncio.sleep(10)
