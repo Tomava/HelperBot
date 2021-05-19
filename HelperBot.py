@@ -289,8 +289,78 @@ async def count(ctx, how_many: int):
 
 
 # TODO: This
-# @admin.command(name="archive", pass_context=True, description="Create an archive of this server, if argument \"true\" "
-#                                                               "is given downloads all attachment files")
-# async def archive(ctx, download_attachments: bool):
+@admin.command(name="archive", pass_context=True, description="Create an archive of this server, if argument \"true\" "
+                                                              "is given downloads all attachment files")
+async def archive(ctx, download_attachments: bool):
+    message = ctx.message
+    guild = message.guild
+    path_to_guild = PATH_TO_ARCHIVES + os.sep + f"{guild.id}_{guild.name}" + os.sep + \
+                    f"{datetime.strftime(datetime.today(),'%Y-%m-%d_%H%M%S')}"
+    if not os.path.exists(path_to_guild):
+        os.makedirs(path_to_guild)
+    await message.channel.send("Archiving server. This might take a while")
+    sent_message = await message.channel.send("Archiving")
+    channels = message.guild.text_channels
+    message_amount = 0
+    attachment_ids = {}
+    for channel in channels:
+        if channel not in attachment_ids:
+            attachment_ids[channel] = []
+        await sent_message.edit(content="Archiving " + channel.name)
+        channel_data = {}
+        messages = await channel.history(limit=None, oldest_first=True).flatten()
+        for message_to_archive in messages:
+            message_amount += 1
+            embeds = []
+            # Get info from each embed
+            for embed in message_to_archive.embeds:
+                current_embed = {"title": embed.title, "description": embed.description, "embed_url": embed.url,
+                                 "image_url": embed.image.url, "fields": []}
+                # There can be multiple fields in one embed
+                for field in embed.fields:
+                    current_embed.get("fields").append({field.name: field.value})
+                # Remove empty fields
+                for item in current_embed:
+                    if str(current_embed.get(item)) == "Embed.Empty":
+                        current_embed[item] = ""
+                embeds.append(current_embed)
+            pinned = message_to_archive.pinned
+            reactions = message_to_archive.reactions
+            attachments = []
+            for attachment in message_to_archive.attachments:
+                attachments.append({"attachment_id": attachment.id, "attachment_url": attachment.url,
+                                    "filename": attachment.filename, "size": attachment.size,
+                                    "type": attachment.content_type})
+                attachment_ids.get(channel).append(attachment.id)
+            created = datetime.timestamp(message_to_archive.created_at)
+            if message_to_archive.edited_at is not None:
+                edited = datetime.timestamp(message_to_archive.edited_at)
+            else:
+                edited = ""
+            author = message_to_archive.author.name
+            message_id = message_to_archive.id
+            # Add all data to channel data by message id
+            channel_data[message_id] = {
+                'message_id': str(message_id),
+                'created_utc': created,
+                'edited': edited,
+                'created_readable': str(HelperBotFunctions.utc_to_local_datetime(message_to_archive.created_at)),
+                'author': author,
+                'content': message_to_archive.content,
+                'embeds': embeds,
+                'reactions': str(reactions),
+                'attachments': attachments,
+                'pinned': pinned,
+                'raw': str(message_to_archive)
+            }
+        # Write channel's json
+        with open(path_to_guild + os.sep + f"{channel.id}_{channel.name}.json", "w", encoding=ENCODING) as file:
+            json.dump(channel_data, file, indent=2, ensure_ascii=False)
+    # Create empty file
+    if not os.path.isfile(PATH_TO_ATTACHMENT_ARCHIVE_LOG):
+        with open(PATH_TO_ATTACHMENT_ARCHIVE_LOG, "w", encoding=ENCODING) as file:
+            pass
+    await sent_message.delete()
+    await message.channel.send(f"Archiving of {message_amount} messages and {0} attachments completed")
 
 bot.run(token)

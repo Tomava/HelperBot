@@ -95,7 +95,7 @@ def get_reminders():
     if len(os.listdir(PATH_TO_REMINDERS)) < 1:
         return {}
     for reminder_file_name in os.listdir(PATH_TO_REMINDERS):
-        with open(PATH_TO_REMINDERS + os.sep + reminder_file_name, "r", encoding='utf-8') as reminder_file:
+        with open(PATH_TO_REMINDERS + os.sep + reminder_file_name, "r", encoding=ENCODING) as reminder_file:
             # file name - .json
             list_of_reminders[reminder_file_name[:-5]] = dict(json.load(reminder_file))
     return list_of_reminders
@@ -163,7 +163,7 @@ class ReminderOrganizer:
         :param user_id: str
         :return: nothing
         """
-        with open(PATH_TO_REMINDERS + os.sep + f"{user_id}.json", "w", encoding='utf-8') as reminder_file:
+        with open(PATH_TO_REMINDERS + os.sep + f"{user_id}.json", "w", encoding=ENCODING) as reminder_file:
             json.dump(dict(sorted(self.__list_of_reminders.get(user_id).items())), reminder_file,
                       indent=2, ensure_ascii=False)
 

@@ -12,6 +12,7 @@ MAXIMUM_RANDOM_MESSAGES = 20
 # One hour
 MINIMUM_INTERVAL_SECONDS = 60 * 60
 MAXIMUM_COUNT = 1000
+ENCODING = "utf-8"
 
 EPOCH_DATETIME = datetime(1970, 1, 1)
 SECONDS_PER_DAY = 24 * 60 * 60
@@ -63,5 +64,7 @@ REMOVE_FROM_LINK = ["list", "index"]
 # Path to home folder
 HOME = str(Path.home())
 PATH_TO_DISCORD = HOME + os.sep + "Discord"
-PATH_TO_REMINDERS = HOME + os.sep + "Discord" + os.sep + "reminders"
+PATH_TO_REMINDERS = PATH_TO_DISCORD + os.sep + "reminders"
 PATH_TO_TOKEN = PATH_TO_DISCORD + os.sep + "HelperBoyToken.env"
+PATH_TO_ATTACHMENT_ARCHIVE_LOG = PATH_TO_DISCORD + os.sep + "archive_attachment.log"
+PATH_TO_ARCHIVES = PATH_TO_DISCORD + os.sep + "archives"
