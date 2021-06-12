@@ -27,6 +27,7 @@ reminder = HelperBotReminderOrganizer.ReminderOrganizer(bot)
 
 
 # TODO: Use scheduler on reminders
+# TODO: Add requirements.txt
 
 
 @bot.event
@@ -289,7 +290,7 @@ async def count(ctx, how_many: int):
 
 
 # TODO: This
-@admin.command(name="archive", pass_context=True, description="Create an archive of this server, if argument \"true\" "
+@admin.command(name="archive", pass_context=True, description="Create an archive of this server, if argument \"True\" "
                                                               "is given downloads all attachment files")
 async def archive(ctx, download_attachments: bool):
     message = ctx.message

@@ -114,8 +114,9 @@ def get_reminder_text(reminder, index):
     (user_id, server_id, channel_id, message_id), (message_text, message_command, raw_message), \
     (interval_amount, interval_measure) = get_reminder_message_format(reminder)
     link = HelperBotFunctions.craft_message_link(server_id, channel_id, message_id)
-    current_message = f"> **{index} : {message_time} -> {time_to_remind} (Interval: {interval_amount} " \
-                      f"{interval_measure})\n> {link}**\n{message_command}\n{message_text}\n"
+    current_message = f"> **{index} : {message_time} -> {time_to_remind} (Interval: " \
+                      f"{f'{interval_amount} {interval_measure}'.strip()})\n> {link}**" \
+                      f"\n{message_command}\n{message_text}\n"
     return current_message
 
 
