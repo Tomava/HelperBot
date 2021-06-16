@@ -2,11 +2,11 @@ import discord
 import logging
 from discord.ext import commands
 import asyncio
+import typing
 import random
 from dotenv import load_dotenv
 import json
 import time
-from image_downloader import download_image
 
 from HelperBotConstants import *
 import HelperBotFunctions
@@ -292,7 +292,7 @@ async def count(ctx, how_many: int):
 # TODO: This
 @admin.command(name="archive", pass_context=True, description="Create an archive of this server, if argument \"True\" "
                                                               "is given also downloads all attachment files")
-async def archive(ctx, download_attachments: bool):
+async def archive(ctx, download_attachments: typing.Optional[bool]):
     message = ctx.message
     guild = message.guild
     path_to_guild = PATH_TO_ARCHIVES + os.sep + f"{guild.id}_{guild.name}" + os.sep + \
@@ -303,7 +303,10 @@ async def archive(ctx, download_attachments: bool):
     if not os.path.isfile(PATH_TO_ATTACHMENT_ARCHIVE_LOG):
         with open(PATH_TO_ATTACHMENT_ARCHIVE_LOG, "w", encoding=ENCODING) as file:
             pass
-    await message.channel.send("Archiving server. This might take a while")
+    if download_attachments:
+        await message.channel.send("Archiving server with attachments. This might take a while")
+    else:
+        await message.channel.send("Archiving server. This might take a while")
     sent_message = await message.channel.send("Archiving")
     channels = message.guild.text_channels
     message_amount = 0
@@ -313,7 +316,7 @@ async def archive(ctx, download_attachments: bool):
             all_attachments[channel] = []
         await sent_message.edit(content=f"Archiving '{channel.name}'")
         channel_data = {}
-        messages = await channel.history(limit=None, oldest_first=True).flatten()
+        messages = await channel.history(limit=10, oldest_first=True).flatten()
         for message_to_archive in messages:
             message_amount += 1
             embeds = []
