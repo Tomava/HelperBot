@@ -12,6 +12,22 @@ def make_dirs():
         os.makedirs(PATH_TO_REMINDERS)
 
 
+def format_bytes(size):
+    """
+    Gives correct prefixes to sizes
+    :param size: int, size in bytes
+    :return: str, Returns size in appropriate format
+    """
+    # 2**10 = 1024
+    power = 2 ** 10
+    n = 0
+    power_labels = {0: '', 1: 'kilo', 2: 'mega', 3: 'giga', 4: 'tera'}
+    while size > power:
+        size /= power
+        n += 1
+    return size, power_labels[n] + 'bytes'
+
+
 def utc_to_local_datetime(utc_datetime):
     delta = utc_datetime - EPOCH_DATETIME
     utc_epoch = SECONDS_PER_DAY * delta.days + delta.seconds

@@ -291,7 +291,7 @@ async def count(ctx, how_many: int):
 
 # TODO: This
 @admin.command(name="archive", pass_context=True, description="Create an archive of this server, if argument \"True\" "
-                                                              "is given downloads all attachment files")
+                                                              "is given also downloads all attachment files")
 async def archive(ctx, download_attachments: bool):
     message = ctx.message
     guild = message.guild
@@ -299,15 +299,19 @@ async def archive(ctx, download_attachments: bool):
                     f"{datetime.strftime(datetime.today(),'%Y-%m-%d_%H%M%S')}"
     if not os.path.exists(path_to_guild):
         os.makedirs(path_to_guild)
+    # Create empty file
+    if not os.path.isfile(PATH_TO_ATTACHMENT_ARCHIVE_LOG):
+        with open(PATH_TO_ATTACHMENT_ARCHIVE_LOG, "w", encoding=ENCODING) as file:
+            pass
     await message.channel.send("Archiving server. This might take a while")
     sent_message = await message.channel.send("Archiving")
     channels = message.guild.text_channels
     message_amount = 0
-    attachment_ids = {}
+    all_attachments = {}
     for channel in channels:
-        if channel not in attachment_ids:
-            attachment_ids[channel] = []
-        await sent_message.edit(content="Archiving " + channel.name)
+        if channel not in all_attachments:
+            all_attachments[channel] = []
+        await sent_message.edit(content=f"Archiving '{channel.name}'")
         channel_data = {}
         messages = await channel.history(limit=None, oldest_first=True).flatten()
         for message_to_archive in messages:
@@ -332,7 +336,9 @@ async def archive(ctx, download_attachments: bool):
                 attachments.append({"attachment_id": attachment.id, "attachment_url": attachment.url,
                                     "filename": attachment.filename, "size": attachment.size,
                                     "type": attachment.content_type})
-                attachment_ids.get(channel).append(attachment.id)
+                all_attachments.get(channel).append({"attachment": attachment, "attachment_id": attachment.id,
+                                                    "attachment_url": attachment.url, "filename": attachment.filename,
+                                                    "size": attachment.size, "type": attachment.content_type})
             created = datetime.timestamp(message_to_archive.created_at)
             if message_to_archive.edited_at is not None:
                 edited = datetime.timestamp(message_to_archive.edited_at)
@@ -357,11 +363,52 @@ async def archive(ctx, download_attachments: bool):
         # Write channel's json
         with open(path_to_guild + os.sep + f"{channel.id}_{channel.name}.json", "w", encoding=ENCODING) as file:
             json.dump(channel_data, file, indent=2, ensure_ascii=False)
-    # Create empty file
-    if not os.path.isfile(PATH_TO_ATTACHMENT_ARCHIVE_LOG):
-        with open(PATH_TO_ATTACHMENT_ARCHIVE_LOG, "w", encoding=ENCODING) as file:
-            pass
+
+    # Downloading attachments
+    attachment_sizes = 0
+    failed_to_download = 0
+    already_downloaded = []
+    downloaded_attachment_ids = []
+    attachment_ids = []
+    with open(PATH_TO_ATTACHMENT_ARCHIVE_LOG, "r", encoding=ENCODING) as file:
+        for line in file.readlines():
+            attachment_ids.append(line.strip())
+    if download_attachments:
+        for channel in all_attachments:
+            await sent_message.edit(content=f"Downloading attachments for '{channel.name}'")
+            folder_path = PATH_TO_ARCHIVES + os.sep + f"{guild.id}_{guild.name}" + os.sep + "attachments" + \
+                          os.sep + f"{channel.id}_{channel.name}"
+            for attachment in all_attachments.get(channel):
+                attachment_id = attachment.get("attachment_id")
+                # Check if attachment has already been downloaded
+                if str(attachment_id) in attachment_ids:
+                    already_downloaded.append(attachment_id)
+                    continue
+                if not os.path.exists(folder_path):
+                    os.makedirs(folder_path)
+                attachment_filename = attachment.get("filename")
+                extension = f".{attachment_filename.split('.')[-1]}"
+                if attachment_filename.count(".") == 0:
+                    extension = ""
+                file_path = folder_path + os.sep + str(attachment_id) + extension
+                try:
+                    await attachment.get("attachment").save(file_path)
+                    downloaded_attachment_ids.append(f"{attachment_id}\n")
+                    attachment_sizes += attachment.get("size")
+                except:
+                    failed_to_download += 1
+        # Append to file
+        with open(PATH_TO_ATTACHMENT_ARCHIVE_LOG, "a", encoding=ENCODING) as file:
+            file.writelines(downloaded_attachment_ids)
+
     await sent_message.delete()
-    await message.channel.send(f"Archiving of {message_amount} messages and {0} attachments completed")
+    message_to_send = f"Archiving of {message_amount} messages"
+    if download_attachments:
+        formatted_size, power_label = HelperBotFunctions.format_bytes(attachment_sizes)
+        message_to_send += f" and {len(downloaded_attachment_ids)} attachments completed with a total size of " \
+                           f"{formatted_size:.2f} {power_label} ({len(already_downloaded)} were already downloaded)"
+        if failed_to_download != 0:
+            message_to_send += f" [{failed_to_download} attachments failed to download]"
+    await message.channel.send(message_to_send)
 
 bot.run(token)
