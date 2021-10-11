@@ -66,6 +66,19 @@ def get_reminder_message_format(reminder):
            (interval_amount, str(interval_measure))
 
 
+def set_reminder_time(reminder, time_to_remind_timestamp):
+    """
+    Sets reminder times according to a given timestamp
+    :param reminder: dict
+    :param time_to_remind_timestamp: float
+    :return:
+    """
+    reminder["reminder_readable"] = str(datetime.fromtimestamp(time_to_remind_timestamp).replace(microsecond=0).
+                                        strftime(DATE_FORMAT))
+    reminder["reminder_timestamp"] = float(time_to_remind_timestamp)
+    return reminder
+
+
 def get_valid_date(reminder_date, reminder_time):
     """
     Parses a date from date and time
@@ -349,7 +362,7 @@ class ReminderOrganizer:
                     # If the reminder time has gone, remind user and delete the reminder
                     if now >= first_reminder_timestamp:
                         reminder = self.__list_of_reminders.get(user_id).get(str(first_reminder_timestamp))
-                        user_to_mention, _, \
+                        user_to_mention, (time_to_remind, time_to_remind_timestamp, message_time, message_timestamp), \
                         (_, server_id, channel_id, message_id), (message_text, message_command, raw_message), \
                         (interval_amount, interval_measure) = get_reminder_message_format(reminder)
                         channel = self.__bot.get_guild(server_id).get_channel(channel_id)
@@ -358,16 +371,17 @@ class ReminderOrganizer:
                                                                      "Reminder", user_to_mention)
                         # Remove reminder
                         self.__list_of_reminders.get(str(user_id)).pop(str(first_reminder_timestamp))
-                        self.write_reminders_to_disk(str(user_id))
-                        # Check if reminder has interval
+                        # If reminder has interval make a new one after the interval
                         if reminder.get("interval_amount") is not None:
-                            # Get the channel
-                            message = await self.__bot.get_guild(server_id).get_channel(channel_id).fetch_message(message_id)
-                            # Add a reminder with interval from current time
-                            reminder = await self.delta_time(message, message_command, False, interval_amount,
-                                                             interval_measure, message_text)
-                            # Add interval to created reminder
-                            await self.add_interval(message, reminder, interval_amount, interval_measure, False)
+                            new_timestamp = get_date_with_delta(interval_amount, interval_measure,
+                                                                datetime.fromtimestamp(time_to_remind_timestamp))
+                            new_timestamp_str = str(new_timestamp)
+                            while new_timestamp_str in self.__list_of_reminders.get(user_id):
+                                new_timestamp += 0.00001
+                                new_timestamp_str = str(new_timestamp)
+                            reminder = set_reminder_time(reminder, new_timestamp)
+                            self.__list_of_reminders.get(str(user_id))[new_timestamp_str] = reminder
+                        self.write_reminders_to_disk(str(user_id))
                     # If the first reminder's time has not passed yet, go to the next user
                     else:
                         break
