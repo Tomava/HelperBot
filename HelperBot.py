@@ -17,7 +17,7 @@ logging.basicConfig(level=logging.INFO)
 HelperBotFunctions.make_dirs()
 # This will show in !help
 description = ""
-intents = discord.Intents.default()
+intents = discord.Intents.all()
 intents.members = True
 bot = commands.Bot(command_prefix=COMMAND_PREFIX, description=description, intents=intents, case_insensitive=True,
                    activity=discord.Game(name=f'{COMMAND_PREFIX}help'))
@@ -196,7 +196,7 @@ async def remove_interval(ctx, index: int):
 
 
 @bot.command(name="noclean", aliases=["nc"], description="Don't clean youtube link")
-async def noclean():
+async def noclean(ctx):
     return False
 
 
