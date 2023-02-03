@@ -29,6 +29,7 @@ def format_bytes(size):
 
 
 def utc_to_local_datetime(utc_datetime):
+    utc_datetime = utc_datetime.replace(tzinfo=None)
     delta = utc_datetime - EPOCH_DATETIME
     utc_epoch = SECONDS_PER_DAY * delta.days + delta.seconds
     time_struct = time.localtime(utc_epoch)

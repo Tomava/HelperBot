@@ -244,14 +244,14 @@ async def random_messages(ctx, how_many: int):
     # (Much quicker than fetching all messages)
     time_to_fetch = random.uniform(channel_created, latest)
     time_to_fetch = datetime.fromtimestamp(time_to_fetch)
-    messages_after = await channel.history(after=time_to_fetch, limit=2 * how_many,
-                                           oldest_first=True).flatten()
-    messages_before = await channel.history(before=time_to_fetch, limit=2 * how_many,
-                                            oldest_first=True).flatten()
+    messages_after = channel.history(after=time_to_fetch, limit=2 * how_many,
+                                           oldest_first=True)
+    messages_before = channel.history(before=time_to_fetch, limit=2 * how_many,
+                                            oldest_first=True)
     # Add messages to a list
     all_messages = []
-    all_messages.extend(messages_before)
-    all_messages.extend(messages_after)
+    all_messages.extend([message async for message in messages_after])
+    all_messages.extend([message async for message in messages_before])
     # If there are less than how_many messages in the channel
     if len(all_messages) <= how_many:
         starting_index = 0
@@ -269,7 +269,8 @@ async def random_messages(ctx, how_many: int):
     # Get a random colour
     random_colour = discord.Colour.from_rgb(r=random.randint(0, 255), g=random.randint(0, 255),
                                             b=random.randint(0, 255))
-    message_link = HelperBotFunctions.craft_message_link(ctx.message.guild.id, channel.id, ctx.message.id)
+    first_message = all_messages[starting_index]
+    message_link = HelperBotFunctions.craft_message_link(first_message.guild.id, first_message.channel.id, first_message.id)
     await HelperBotFunctions.send_embed_messages(list_of_messages, channel, "Random convo", message_link, random_colour)
 
 
@@ -316,8 +317,8 @@ async def archive(ctx, download_attachments: typing.Optional[bool]):
             all_attachments[channel] = []
         await sent_message.edit(content=f"Archiving '{channel.name}'")
         channel_data = {}
-        messages = await channel.history(limit=10, oldest_first=True).flatten()
-        for message_to_archive in messages:
+        messages = channel.history(limit=None, oldest_first=True)
+        async for message_to_archive in messages:
             message_amount += 1
             embeds = []
             # Get info from each embed
