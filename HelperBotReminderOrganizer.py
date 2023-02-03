@@ -92,7 +92,7 @@ def get_valid_date(reminder_date, reminder_time):
         reminder_date = datetime.today().date()
     reminder_date_and_time = f"{reminder_date} {reminder_time.replace('.', ':')}"
     try:
-        iso_date = dateutil.parser.parse(reminder_date_and_time)
+        iso_date = dateutil.parser.parse(reminder_date_and_time, dayfirst=True)
     except dateutil.parser._parser.ParserError:
         raise commands.errors.UserInputError
     real_date = datetime.timestamp(datetime.fromisoformat(str(iso_date)))
