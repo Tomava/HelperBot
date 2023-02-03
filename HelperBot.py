@@ -90,7 +90,7 @@ async def on_message(message):
                                                 random.choice(LIST_OF_RESPONSES_TO_TAGS)], message.channel)
 
 
-@bot.group(name="admin", pass_context=True, case_insensitive=True)
+@bot.group(name="admin", case_insensitive=True)
 async def admin(ctx):
     roles = ctx.message.author.roles
     role_names = [role.name for role in roles]
@@ -100,7 +100,7 @@ async def admin(ctx):
         await admin_help(ctx)
 
 
-@bot.group(name="reminder", aliases=["remindme"], pass_context=True, case_insensitive=True)
+@bot.group(name="reminder", aliases=["remindme"], case_insensitive=True)
 async def remindme(ctx):
     if ctx.invoked_subcommand is None:
         await reminder.reminder_help(ctx, "Your message wasn't formatted correctly\n")
@@ -145,34 +145,34 @@ async def delete(ctx, how_many: int):
         return await HelperBotFunctions.send_messages(['Sorry, you took too long.'], message.channel)
 
 
-@remindme.command(name="help", pass_context=True, description="Help for reminders")
+@remindme.command(name="help", description="Help for reminders")
 async def reminder_help(ctx):
     await reminder.reminder_help(ctx)
 
 
-@remindme.command(name="remove", aliases=["delete"], pass_context=True, description="Deletes reminder at given index")
+@remindme.command(name="remove", aliases=["delete"], description="Deletes reminder at given index")
 async def delete(ctx, index: int):
     await reminder.delete(ctx, index)
 
 
-@remindme.command(name="list", pass_context=True, description="Lists all reminders")
+@remindme.command(name="list", description="Lists all reminders")
 async def list_reminders(ctx):
     await reminder.list_reminders(ctx)
 
 
-@remindme.command(name="date", aliases=["on", "at"], pass_context=True, description="Reminds at a given date and time")
+@remindme.command(name="date", aliases=["on", "at"], description="Reminds at a given date and time")
 async def date(ctx, reminder_date: str, reminder_time: str, message_text: str = "", *args):
     await reminder.date(ctx, reminder_date, reminder_time, message_text, *args)
 
 
-@remindme.command(name="time", aliases=["in"], pass_context=True, description="Reminds in a given amount amount of "
+@remindme.command(name="time", aliases=["in"], description="Reminds in a given amount amount of "
                                                                               "[Time Measures]")
 async def delta_time(ctx, time_amount: int, time_measure: str, message_text: str = "", *args):
     message_command = " ".join([COMMAND_PREFIX + str(ctx.command), str(time_amount), time_measure])
     await reminder.delta_time(ctx.message, message_command, True, time_amount, time_measure, message_text, *args)
 
 
-@remindme.command(name="timemeasures", pass_context=True, description="List of valid time measures")
+@remindme.command(name="timemeasures", description="List of valid time measures")
 async def time_measures(ctx):
     message = "Time measures\n\n"
     max_width = len(max(LIST_OF_TIME_MEASURES.keys(), key=lambda k: len(LIST_OF_TIME_MEASURES.get(k)))) + 1
@@ -189,7 +189,7 @@ async def add_interval(ctx, index: int, interval: int, time_measure: str):
     await reminder.add_interval(ctx.message, this_reminder, interval, time_measure)
 
 
-@remindme.command(name="remove_interval", pass_context=True, description="Removes an interval from a reminder")
+@remindme.command(name="remove_interval", description="Removes an interval from a reminder")
 async def remove_interval(ctx, index: int):
     this_reminder = await reminder.get_reminder(ctx.message, index)
     await reminder.remove_interval(ctx.message, this_reminder)
@@ -273,12 +273,12 @@ async def random_messages(ctx, how_many: int):
     await HelperBotFunctions.send_embed_messages(list_of_messages, channel, "Random convo", message_link, random_colour)
 
 
-@admin.command(name="help", pass_context=True, description="Help for admin")
+@admin.command(name="help", description="Help for admin")
 async def admin_help(ctx):
     await HelperBotFunctions.send_messages([ADMIN_HELP], ctx.message.channel, make_code_format=True)
 
 
-@admin.command(name="count", pass_context=True, description="Count to x with about a second between messages. "
+@admin.command(name="count", description="Count to x with about a second between messages. "
                                                             "Use !count stop to stop counting")
 async def count(ctx, how_many: int):
     if how_many > MAXIMUM_COUNT:
@@ -290,7 +290,7 @@ async def count(ctx, how_many: int):
 
 
 # TODO: This
-@admin.command(name="archive", pass_context=True, description="Create an archive of this server, if argument \"True\" "
+@admin.command(name="archive", description="Create an archive of this server, if argument \"True\" "
                                                               "is given also downloads all attachment files")
 async def archive(ctx, download_attachments: typing.Optional[bool]):
     message = ctx.message

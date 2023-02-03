@@ -58,6 +58,7 @@ REMINDER_HELP = (f"Correct formats are: (using !remindme / !reminder)\n"
                  f"{COMMAND_PREFIX}remindme [timemeasures]")
 ADMIN_HELP = (
     f"{COMMAND_PREFIX}archive [true]: Creates an archive of this server, if argument \"true\" is given downloads all attachment files\n"
+    f"{COMMAND_PREFIX}count x: I will count to x with about a second between messages. Use !count stop to stop counting\n"
     f"{COMMAND_PREFIX}admin help\n")
 REMOVE_FROM_LINK = ["list", "index"]
 
