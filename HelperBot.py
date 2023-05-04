@@ -91,13 +91,16 @@ async def on_message(message):
 
 
 @bot.group(name="admin", case_insensitive=True)
+@commands.has_role(ADMIN_ROLE)
 async def admin(ctx):
-    roles = ctx.message.author.roles
-    role_names = [role.name for role in roles]
-    if "Admin" not in role_names:
-        return await HelperBotFunctions.send_messages(["You're not an admin!"], ctx.message.channel)
     if ctx.invoked_subcommand is None:
         await admin_help(ctx)
+
+
+@admin.error
+async def admin_group_error(ctx, error):
+    if isinstance(error, commands.MissingRole):
+        return await HelperBotFunctions.send_messages([f"You do not have the '{ADMIN_ROLE}' role and cannot use admin commands."], ctx.message.channel)
 
 
 @bot.group(name="reminder", aliases=["remindme"], case_insensitive=True)
