@@ -47,8 +47,7 @@ LIST_OF_TIME_MEASURES = {"seconds": ["sec", "secs", "second", "seconds"],
                          }
 REMINDER_HELP = (f"Correct formats are: (using !remindme / !reminder)\n"
                  f"{COMMAND_PREFIX}remindme [in/time] [x] [Time Measure]\n"
-                 f"{COMMAND_PREFIX}remindme [on/at/date] [dd.mm.yyyy hh.mm.ss]\n"
-                 f"{COMMAND_PREFIX}remindme [tomorrow/today] [hh.mm.ss]\n"
+                 f"{COMMAND_PREFIX}remindme [on/at/date] [dd.mm.yyyy/tomorrow/today hh.mm.ss]\n"
                  f"{COMMAND_PREFIX}remindme [list]\n"
                  f"{COMMAND_PREFIX}remindme [remove/delete] [index]\n"
                  f"{COMMAND_PREFIX}remindme [interval/add_interval/every] [index] [x] [Time Measure]\n"
