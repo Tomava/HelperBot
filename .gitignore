@@ -4,4 +4,3 @@ helper_config.py
 __pycache__/
 *.env
 .idea
-docker-compose-pi.yaml

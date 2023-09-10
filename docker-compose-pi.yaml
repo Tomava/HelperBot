@@ -1,0 +1,10 @@
+services:
+  bot:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - /home/pi/Discord:/home/discord/Discord
+      - /media/pi/Archive/Discord/archives:/home/discord/Discord/archives
+      - /etc/localtime:/etc/localtime
+    restart: always
