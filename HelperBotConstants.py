@@ -63,6 +63,7 @@ ADMIN_HELP = (
 ADMIN_ROLE = "Admin"
 
 REMOVE_FROM_LINK = ["list", "index"]
+AUTO_CLEAN_PREFIX = "AUTO_CLEAN="
 
 # Path to home folder
 HOME = str(Path.home())

@@ -11,6 +11,7 @@ import time
 from HelperBotConstants import *
 import HelperBotFunctions
 import HelperBotReminderOrganizer
+import HelperBotAutoCleaner
 from HelperBotCustomizations import *
 
 logging.basicConfig(level=logging.INFO)
@@ -24,7 +25,7 @@ bot = commands.Bot(command_prefix=COMMAND_PREFIX, description=description, inten
 load_dotenv(PATH_TO_TOKEN)
 token = os.getenv('DISCORD_TOKEN')
 reminder = HelperBotReminderOrganizer.ReminderOrganizer(bot)
-
+auto_cleaner = HelperBotAutoCleaner.AutoCleaner(bot)
 
 # TODO: Use scheduler on reminders
 # TODO: Add requirements.txt
@@ -37,8 +38,11 @@ async def on_ready():
     print(bot.user.id)
     print('------')
     if not reminder.get_started():
-        await reminder.start()
-
+        t1 = asyncio.create_task(reminder.start())
+    if not auto_cleaner.get_started():
+        t2 = asyncio.create_task(auto_cleaner.start())
+    if not (reminder.get_started() and auto_cleaner.get_started()):
+        await asyncio.gather(t1, t2)
 
 @bot.event
 async def on_command_error(ctx, error):
