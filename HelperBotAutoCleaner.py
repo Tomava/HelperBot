@@ -34,4 +34,4 @@ class AutoCleaner:
                             continue
                         print(f"Deleting: {message.id}")
                         await message.delete()
-            await asyncio.sleep(10)
+            await asyncio.sleep(3600)
