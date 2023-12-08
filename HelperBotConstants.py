@@ -1,5 +1,4 @@
 import os
-from pathlib import Path
 from datetime import datetime
 
 COMMAND_PREFIX = "!"
@@ -65,10 +64,9 @@ ADMIN_ROLE = "Admin"
 REMOVE_FROM_LINK = ["list", "index"]
 AUTO_CLEAN_PREFIX = "AUTO_CLEAN="
 
-# Path to home folder
-HOME = str(Path.home())
-PATH_TO_DISCORD = HOME + os.sep + "Discord"
-PATH_TO_REMINDERS = PATH_TO_DISCORD + os.sep + "reminders"
+PATH_TO_DISCORD = "Discord"
+PATH_TO_DATA = PATH_TO_DISCORD + os.sep + "data"
+PATH_TO_REMINDERS = PATH_TO_DATA + os.sep + "reminders"
 PATH_TO_TOKEN = PATH_TO_DISCORD + os.sep + "HelperBoyToken.env"
-PATH_TO_ATTACHMENT_ARCHIVE_LOG = PATH_TO_DISCORD + os.sep + "archive_attachment.log"
-PATH_TO_ARCHIVES = PATH_TO_DISCORD + os.sep + "archives"
+PATH_TO_ATTACHMENT_ARCHIVE_LOG = PATH_TO_DATA + os.sep + "archive_attachment.log"
+PATH_TO_ARCHIVES = PATH_TO_DATA + os.sep + "archives"

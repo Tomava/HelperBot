@@ -4,7 +4,7 @@ services:
       context: .
       dockerfile: Dockerfile
     volumes:
-      - /home/debian/Discord:/home/discord/Discord
-      - /media/archive/Discord/archives:/home/discord/Discord/archives
+      - /home/debian/HelperBot/data:/app/Discord/data
+      - /media/archive/Discord/archives:/app/Discord/data/archives
       - /etc/localtime:/etc/localtime
     restart: always

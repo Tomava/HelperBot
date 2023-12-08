@@ -1,14 +1,16 @@
 FROM python:3.11-buster
 
-RUN useradd -u 1000 discord
-RUN mkdir /home/discord
-RUN chown -R discord /home/discord
+# Uncomment everything below if not running rootless Docker
 
-USER discord
+# RUN useradd -u 1000 discord
+# RUN mkdir /home/discord
+# RUN chown -R discord /home/discord
 
+#USER discord
 
-WORKDIR /home/discord
+WORKDIR /app
 
+COPY .env ./
 COPY *.py ./
 COPY requirements.txt ./
 

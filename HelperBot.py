@@ -22,7 +22,7 @@ intents = discord.Intents.all()
 intents.members = True
 bot = commands.Bot(command_prefix=COMMAND_PREFIX, description=description, intents=intents, case_insensitive=True,
                    activity=discord.Game(name=f'{COMMAND_PREFIX}help'))
-load_dotenv(PATH_TO_TOKEN)
+load_dotenv()
 token = os.getenv('DISCORD_TOKEN')
 reminder = HelperBotReminderOrganizer.ReminderOrganizer(bot)
 auto_cleaner = HelperBotAutoCleaner.AutoCleaner(bot)
