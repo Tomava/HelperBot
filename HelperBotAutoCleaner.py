@@ -1,3 +1,4 @@
+import discord
 import datetime
 import asyncio
 import re
@@ -20,18 +21,21 @@ class AutoCleaner:
         while True:
             for guild in self.__bot.guilds:
                 for channel in guild.text_channels:
-                    description = channel.topic
-                    if description is None:
-                        continue
-                    re_match = re.search(re_pattern, str(description))
-                    if re_match is None:
-                        continue
-                    time_in_hours = int(re_match.group(1))
-                    oldest_allowed = datetime.datetime.now() - relativedelta(hours=time_in_hours)
-                    messages_before = channel.history(before=oldest_allowed, limit=None)
-                    async for message in messages_before:
-                        if message.pinned:
+                    try:
+                        description = channel.topic
+                        if description is None:
                             continue
-                        print(f"Deleting: {message.id}")
-                        await message.delete()
+                        re_match = re.search(re_pattern, str(description))
+                        if re_match is None:
+                            continue
+                        time_in_hours = int(re_match.group(1))
+                        oldest_allowed = datetime.datetime.now() - relativedelta(hours=time_in_hours)
+                        messages_before = channel.history(before=oldest_allowed, limit=None)
+                        async for message in messages_before:
+                            if message.pinned:
+                                continue
+                            print(f"Deleting: {message.id}")
+                            await message.delete()
+                    except (discord.errors.Forbidden, discord.errors.HTTPException):
+                        continue
             await asyncio.sleep(3600)

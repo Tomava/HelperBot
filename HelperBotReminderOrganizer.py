@@ -40,7 +40,7 @@ def get_reminder_message_format(reminder):
     :param reminder: dict
     :return: user_to_mention, (time_to_remind, time_to_remind_timestamp, message_time, message_timestamp),
     (user_id, server_id, channel_id, message_id), (message_text, message_command, raw_message),
-    (interval_amount, interval_measure)
+    (interval_amount, interval_measure), failed_count
     """
     time_to_remind = str(reminder.get("reminder_readable"))
     time_to_remind_timestamp = float(reminder.get("reminder_timestamp"))
@@ -56,14 +56,19 @@ def get_reminder_message_format(reminder):
     raw_message = str(reminder.get('raw_message'))
     interval_amount = reminder.get('interval_amount')
     interval_measure = reminder.get('interval_measure')
+    failed_count = reminder.get('failed_count')
     # Change add_interval measure to empty string, so messages don't show "NoneNone"
     if interval_measure is None:
         interval_measure = ""
     if interval_amount is not None:
         interval_amount = int(interval_amount)
+    if failed_count is None:
+        failed_count = 0
+    else:
+        failed_count = int(failed_count)
     return user_to_mention, (time_to_remind, time_to_remind_timestamp, message_time, message_timestamp), \
            (user_id, server_id, channel_id, message_id), (message_text, message_command, raw_message), \
-           (interval_amount, str(interval_measure))
+           (interval_amount, str(interval_measure)), failed_count
 
 
 def set_reminder_time(reminder, time_to_remind_timestamp):
@@ -110,7 +115,8 @@ def get_reminders():
     for reminder_file_name in os.listdir(PATH_TO_REMINDERS):
         with open(PATH_TO_REMINDERS + os.sep + reminder_file_name, "r", encoding=ENCODING) as reminder_file:
             # file name - .json
-            list_of_reminders[reminder_file_name[:-5]] = dict(json.load(reminder_file))
+            file_without_ext = reminder_file_name.removesuffix(".json")
+            list_of_reminders[file_without_ext] = dict(json.load(reminder_file))
     return list_of_reminders
 
 
@@ -132,6 +138,8 @@ def get_reminder_text(reminder, index):
                       f"\n{message_command}\n{message_text}\n"
     return current_message
 
+
+# TODO: class Reminder:
 
 class ReminderOrganizer:
 
@@ -279,7 +287,7 @@ class ReminderOrganizer:
         if reminder is None:
             return
         (_, (time_to_remind, time_to_remind_timestamp, message_time, message_timestamp), _, _,
-         (interval_amount, interval_measure)) = get_reminder_message_format(reminder)
+         (interval_amount, interval_measure)), _ = get_reminder_message_format(reminder)
         user_id = str(message.author.id)
         index = sorted(self.__list_of_reminders.get(user_id)).index(str(time_to_remind_timestamp))
         if interval_amount is None:
@@ -353,37 +361,48 @@ class ReminderOrganizer:
                 await asyncio.sleep(10)
                 continue
             for user_id in self.__list_of_reminders:
-                # Check user's reminders in a loop
-                while True:
-                    # If user has no reminders, go to next user
-                    if len(self.__list_of_reminders.get(user_id)) < 1:
-                        break
-                    first_reminder_timestamp = float(sorted(self.__list_of_reminders.get(user_id))[0])
-                    # If the reminder time has gone, remind user and delete the reminder
-                    if now >= first_reminder_timestamp:
-                        reminder = self.__list_of_reminders.get(user_id).get(str(first_reminder_timestamp))
-                        user_to_mention, (time_to_remind, time_to_remind_timestamp, message_time, message_timestamp), \
-                        (_, server_id, channel_id, message_id), (message_text, message_command, raw_message), \
-                        (interval_amount, interval_measure) = get_reminder_message_format(reminder)
-                        channel = self.__bot.get_guild(server_id).get_channel(channel_id)
-                        message_to_send = get_reminder_text(reminder, 0)
+                to_be_handled = []
+                user_reminders = self.__list_of_reminders.get(user_id)
+                # If user has no reminders, go to next user
+                if len(user_reminders) < 1:
+                    continue
+                for timestamp_str, reminder in user_reminders.items():
+                    timestamp = float(timestamp_str)
+                    if now >= timestamp:
+                        to_be_handled.append((timestamp, reminder))
+                for timestamp, reminder in to_be_handled:
+                    user_to_mention, (time_to_remind, time_to_remind_timestamp, message_time, message_timestamp), \
+                    (user_id, server_id, channel_id, message_id), (message_text, message_command, raw_message), \
+                    (interval_amount, interval_measure), failed_count = get_reminder_message_format(reminder)
+                    channel = self.__bot.get_guild(server_id).get_channel(channel_id)
+                    message_to_send = get_reminder_text(reminder, 0)
+                    try:
                         await HelperBotFunctions.send_embed_messages([message_to_send], channel,
-                                                                     "Reminder", user_to_mention)
-                        # Remove reminder
-                        self.__list_of_reminders.get(str(user_id)).pop(str(first_reminder_timestamp))
-                        # If reminder has interval make a new one after the interval
-                        if reminder.get("interval_amount") is not None:
-                            new_timestamp = get_date_with_delta(interval_amount, interval_measure,
-                                                                datetime.fromtimestamp(time_to_remind_timestamp))
+                                                                    "Reminder", user_to_mention)
+                    except (discord.errors.Forbidden, discord.errors.HTTPException):
+                        print(f"Failed to send reminder to channel {channel_id}")
+                        # Send to message author instead
+                        try:
+                            user = await self.__bot.fetch_user(user_id)
+                            await HelperBotFunctions.send_embed_messages([message_to_send], user,
+                                                                    "Reminder", user_to_mention)
+                        # Fail and try again the next time
+                        except (discord.errors.Forbidden, discord.errors.HTTPException):
+                            # Only skip deleting reminder if the maximum fail count is not reached (TODO)
+                            #if failed_count <= MAXIMUM_FAILED_COUNT:
+                            continue
+                    # Remove reminder
+                    user_reminders.pop(str(timestamp))
+                    # If reminder has interval make a new one after the interval
+                    if reminder.get("interval_amount") is not None:
+                        new_timestamp = get_date_with_delta(interval_amount, interval_measure,
+                                                            datetime.fromtimestamp(time_to_remind_timestamp))
+                        new_timestamp_str = str(new_timestamp)
+                        while new_timestamp_str in self.__list_of_reminders.get(user_id):
+                            new_timestamp += 0.00001
                             new_timestamp_str = str(new_timestamp)
-                            while new_timestamp_str in self.__list_of_reminders.get(user_id):
-                                new_timestamp += 0.00001
-                                new_timestamp_str = str(new_timestamp)
-                            reminder = set_reminder_time(reminder, new_timestamp)
-                            self.__list_of_reminders.get(str(user_id))[new_timestamp_str] = reminder
-                        self.write_reminders_to_disk(str(user_id))
-                    # If the first reminder's time has not passed yet, go to the next user
-                    else:
-                        break
+                        reminder = set_reminder_time(reminder, new_timestamp)
+                        self.__list_of_reminders.get(str(user_id))[new_timestamp_str] = reminder
+                self.write_reminders_to_disk(str(user_id))
             # Sleep for 10 seconds after checking each user
             await asyncio.sleep(10)

@@ -8,3 +8,7 @@ services:
       - /media/archive/Discord/archives:/app/Discord/data/archives
       - /etc/localtime:/etc/localtime
     restart: always
+    logging:
+      driver: "json-file"
+    environment:
+      - PYTHONUNBUFFERED=1
