@@ -24,7 +24,7 @@ bot = commands.Bot(command_prefix=COMMAND_PREFIX, description=description, inten
                    activity=discord.Game(name=f'{COMMAND_PREFIX}help'))
 load_dotenv()
 token = os.getenv('DISCORD_TOKEN')
-reminder = HelperBotReminderOrganizer.ReminderOrganizer(bot)
+reminder_organizer = HelperBotReminderOrganizer.ReminderOrganizer(bot)
 auto_cleaner = HelperBotAutoCleaner.AutoCleaner(bot)
 
 # TODO: Use scheduler on reminders
@@ -37,11 +37,11 @@ async def on_ready():
     print(bot.user.name)
     print(bot.user.id)
     print('------')
-    if not reminder.get_started():
-        t1 = asyncio.create_task(reminder.start())
+    if not reminder_organizer.get_started():
+        t1 = asyncio.create_task(reminder_organizer.start())
     if not auto_cleaner.get_started():
         t2 = asyncio.create_task(auto_cleaner.start())
-    if not (reminder.get_started() and auto_cleaner.get_started()):
+    if not (reminder_organizer.get_started() and auto_cleaner.get_started()):
         await asyncio.gather(t1, t2)
 
 @bot.event
@@ -110,7 +110,7 @@ async def admin_group_error(ctx, error):
 @bot.group(name="reminder", aliases=["remindme"], case_insensitive=True)
 async def remindme(ctx):
     if ctx.invoked_subcommand is None:
-        await reminder.reminder_help(ctx, "Your message wasn't formatted correctly\n")
+        await reminder_organizer.reminder_help(ctx, "Your message wasn't formatted correctly\n")
 
 
 @bot.command(aliases=["remove"], description="Deletes given amount of messages")
@@ -154,29 +154,29 @@ async def delete(ctx, how_many: int):
 
 @remindme.command(name="help", description="Help for reminders")
 async def reminder_help(ctx):
-    await reminder.reminder_help(ctx)
+    await reminder_organizer.reminder_help(ctx)
 
 
 @remindme.command(name="remove", aliases=["delete"], description="Deletes reminder at given index")
 async def delete(ctx, index: int):
-    await reminder.delete(ctx, index)
+    await reminder_organizer.delete(ctx, index)
 
 
 @remindme.command(name="list", description="Lists all reminders")
 async def list_reminders(ctx):
-    await reminder.list_reminders(ctx)
+    await reminder_organizer.list_reminders(ctx)
 
 
 @remindme.command(name="date", aliases=["on", "at"], description="Reminds at a given date and time")
 async def date(ctx, reminder_date: str, reminder_time: str, message_text: str = "", *args):
-    await reminder.date(ctx, reminder_date, reminder_time, message_text, *args)
+    await reminder_organizer.date(ctx, reminder_date, reminder_time, message_text, *args)
 
 
 @remindme.command(name="time", aliases=["in"], description="Reminds in a given amount amount of "
                                                                               "[Time Measures]")
 async def delta_time(ctx, time_amount: int, time_measure: str, message_text: str = "", *args):
     message_command = " ".join([COMMAND_PREFIX + str(ctx.command), str(time_amount), time_measure])
-    await reminder.delta_time(ctx.message, message_command, True, time_amount, time_measure, message_text, *args)
+    await reminder_organizer.delta_time(ctx.message, message_command, True, time_amount, time_measure, message_text, *args)
 
 
 @remindme.command(name="timemeasures", description="List of valid time measures")
@@ -192,14 +192,14 @@ async def time_measures(ctx):
 @remindme.command(name="add_interval", aliases=["interval", "every"], pass_context=True,
                   description="Adds an interval of every x [Time Measure] to a reminder")
 async def add_interval(ctx, index: int, interval: int, time_measure: str):
-    this_reminder = await reminder.get_reminder(ctx.message, index)
-    await reminder.add_interval(ctx.message, this_reminder, interval, time_measure)
+    this_reminder = await reminder_organizer.get_reminder_with_index(ctx.message, index)
+    await reminder_organizer.add_interval(ctx.message, this_reminder, interval, time_measure)
 
 
 @remindme.command(name="remove_interval", description="Removes an interval from a reminder")
 async def remove_interval(ctx, index: int):
-    this_reminder = await reminder.get_reminder(ctx.message, index)
-    await reminder.remove_interval(ctx.message, this_reminder)
+    this_reminder = await reminder_organizer.get_reminder_with_index(ctx.message, index)
+    await reminder_organizer.remove_interval(ctx.message, this_reminder)
 
 
 @bot.command(name="noclean", aliases=["nc"], description="Don't clean youtube link")
