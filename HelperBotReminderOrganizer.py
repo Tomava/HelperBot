@@ -386,8 +386,9 @@ class ReminderOrganizer:
         return reminder
     
     def add_reminder(self, user_id: str, reminder: Reminder):
-        self.__list_of_reminders.get(str(user_id)).append(reminder)
-        self.__list_of_reminders = {key: sorted(value, key=lambda x: x.get_reminder_timestamp()) for key, value in self.__list_of_reminders.items()}
+        user_reminders = self.__list_of_reminders.get(str(user_id))
+        user_reminders.append(reminder)
+        self.__list_of_reminders[str(user_id)] = sorted(user_reminders, key=lambda x: x.get_reminder_timestamp())
         self.write_reminders_to_disk(user_id)
 
     def remove_reminder(self, user_id: str, reminder: Reminder):
