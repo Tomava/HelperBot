@@ -7,7 +7,7 @@ services:
       - /home/debian/HelperBot/data:/app/Discord/data
       - /media/archive/Discord/archives:/app/Discord/data/archives
       - /etc/localtime:/etc/localtime
-    restart: always
+    restart: unless-stopped
     logging:
       driver: "json-file"
     environment:

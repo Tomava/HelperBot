@@ -15,16 +15,11 @@ pip install -r requirements.txt
 ```
 3. Get discord bot token from [Discord Developer Portal](https://discord.com/developers/applications).
 
-4. Create a file called **HelperBoyToken.env** in
-
-| OS | Dir |
-| ------ | ------ |
-| Linux | /home/User/Discord/ |
-| Windows | C:\Users\User\Discord\ |
+4. Create a file called **.env**
 
 5. Add the bot token to the file like this:
 ```
-DISCORD_TOKEN= XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+DISCORD_TOKEN=XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 ```
 
 6. Run HelperBot:
