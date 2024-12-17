@@ -5,7 +5,7 @@ services:
       dockerfile: Dockerfile
     volumes:
       - /home/debian/HelperBot/data:/app/Discord/data
-      - /media/archive/Discord/archives:/app/Discord/data/archives
+      - /media/appdata/HelperBot/archives:/app/Discord/data/archives
       - /etc/localtime:/etc/localtime
     restart: unless-stopped
     logging:
